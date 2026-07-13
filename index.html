@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PHP + WordPress × Fujisawa V2.1 — คอร์สเรียน</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
+:root{--bg:#f6f8fa;--card:#fff;--ink:#1f2937;--muted:#6b7280;--brand:#15679f;--brand-dark:#0c3f5e;--accent:#e8863a;--ok:#059669;--border:#e5e7eb;--tint:#e4eff5}
+*{box-sizing:border-box}body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--ink);margin:0;line-height:1.8;font-size:16px}
+.wrap{max-width:860px;margin:0 auto;padding:24px 20px 80px}
+header.hero{background:linear-gradient(135deg,#0c3f5e,#15679f);color:#fff;padding:44px 20px}
+header.hero h1{margin:0 0 8px;font-size:1.8rem}header.hero p{margin:0;opacity:.92}
+h2{font-size:1.3rem;margin:38px 0 12px;padding-bottom:8px;border-bottom:3px solid var(--brand);display:inline-block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin:14px 0;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.card.disabled{opacity:.6}
+a.week{font-weight:700;color:var(--brand-dark);text-decoration:none;font-size:1.05rem}
+span.week-off{font-weight:700;color:var(--muted);font-size:1.05rem}
+.badge{display:inline-block;background:var(--ok);color:#fff;font-size:.75rem;padding:2px 10px;border-radius:999px;font-weight:600;margin-left:8px}
+.badge.soon{background:#9ca3af}
+.badge.phase{background:var(--accent)}
+.muted{color:var(--muted);font-size:.9rem}
+.mission{display:inline-block;background:var(--tint);color:var(--brand-dark);font-size:.8rem;padding:2px 10px;border-radius:6px;margin-top:8px}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:.92rem}
+th,td{border:1px solid var(--border);padding:9px 12px;text-align:left}th{background:var(--tint)}
+.warn{background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:14px 18px;margin:14px 0;font-size:.92rem}
+code{background:#eef2f7;border-radius:4px;padding:1px 6px;font-size:.88em}
+footer{text-align:center;color:var(--muted);font-size:.85rem;margin-top:60px}
+@media(max-width:600px){body{font-size:15px}header.hero h1{font-size:1.3rem}.wrap{padding:18px 14px 60px}table{display:block;overflow-x:auto}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap" style="padding:0 20px">
+    <h1>🐘 PHP + WordPress × Fujisawa V2.1</h1>
+    <p>แทร็กเสริมเข้าใจ WordPress ถึงแก่น ผ่านงาน redesign จริง · CPT · Taxonomy · ACF · qTranslate · WP_Query · Schema/GEO · Security</p>
+  </div>
+</header>
+<div class="wrap">
+
+  <div class="card">
+    <strong>วิธีเรียน:</strong> แต่ละสัปดาห์อ่านบทเรียน (concept ก่อน syntax + why ทีละบรรทัด) → ทำ Mission ด้วยตัวเอง
+    (<strong>ปิด AI เขียนมือ</strong> · ติดเกิน 20 นาทีค่อยขอ hint) → ตอบ Quiz ท้ายบท
+    · Mission ทุกอันคือ <strong>milestone จริงของงาน redesign Fujisawa</strong> (Phase 0-4) ทำใน sandbox เท่านั้น — ห้ามแตะเว็บจริง/DB จริง
+  </div>
+
+  <h2>📚 บทเรียน (9 สัปดาห์)</h2>
+
+  <div class="card">
+    <a class="week" href="week-01/index.html">Week 1 — WP คิดยังไง: The WordPress Mental Model</a>
+    <span class="badge">พร้อมเรียน</span>
+    <p class="muted" style="margin:6px 0 0">3 เสาหลัก: ทุกอย่างคือ wp_posts · hook = ปลั๊กไฟ · template hierarchy + twist ของจริง (Page Template) · เนื้อหา ~2-3 ชม. + Mission ~3-4 ชม.</p>
+    <span class="mission">🎯 Mission = Phase 0: setup sandbox ตรง production + repo wp-hooks-lab</span>
+  </div>
+
+  <div class="card disabled">
+    <span class="week-off">Week 2 — แกะ Stack 12 ปลั๊กอิน (Plugin ไม่ใช่กล่องดำ)</span>
+    <span class="badge soon">สร้างหลังจบ W1</span>
+    <p class="muted" style="margin:6px 0 0">CPT UI / ACF / qTranslate-XT / AIOSEO ทำอะไรเบื้องหลัง · อ่าน functions-discover-fujisawa.php ทีละบรรทัด</p>
+    <span class="mission">🎯 import ACF export จริง + register CPT ด้วยโค้ดล้วน</span>
+  </div>
+
+  <div class="card disabled">
+    <span class="week-off">Week 3 — Data Model จริง: 18 CPT + 8 Taxonomy ⭐</span>
+    <span class="badge soon">รอสร้าง</span>
+    <p class="muted" style="margin:6px 0 0">ระบบ prefix + flag · ปริศนา whattosee vs sstr_spot · has_archive:false 14 ตัว · can_export:false</p>
+    <span class="mission">🎯 DESIGN-ANALYSIS.md + ลิสต์คำถามทีม (ใช้ประชุมจริงได้)</span>
+  </div>
+
+  <div class="card disabled">
+    <span class="week-off">Week 4 — ACF ลึก: 24 Field Groups ⭐</span>
+    <span class="badge soon">รอสร้าง</span>
+    <p class="muted" style="margin:6px 0 0">qtranslate_* field types · acf-json · field GEO ที่ต้องเพิ่ม · 🔐 เริ่มถัก escape ทุก output</p>
+    <span class="mission">🎯 เพิ่ม summary_th / faq / geo_lat-lng บน sandbox + commit acf-json</span>
+  </div>
+
+  <div class="card disabled">
+    <span class="week-off">Week 5 — qTranslate-XT ถึงแก่น: 8 ภาษาในช่องเดียว ⭐</span>
+    <span class="badge soon">รอสร้าง</span>
+    <p class="muted" style="margin:6px 0 0">[:en]…[:th]… · qtranxf_use_language() · Risk R8/R11 · เทียบ WPML/Polylang</p>
+    <span class="mission">🎯 แก้ lang_label() ให้ครบ 8 ภาษา — งาน MR จริงชิ้นแรก</span>
+  </div>
+
+  <div class="card disabled">
+    <span class="week-off">Week 6 — WP_Query &amp; The Loop ⭐</span>
+    <span class="badge soon">รอสร้าง</span>
+    <p class="muted" style="margin:6px 0 0">main vs custom query · tax_query/meta_query · กับดัก orderby meta · df_get_banner_emergency() ทีละบรรทัด</p>
+    <span class="mission">🎯 Phase 1: header.php + parts/unibar.php (แถบส้ม + emergency override)</span>
+  </div>
+
+  <div class="card disabled">
+    <span class="week-off">Week 7 — อ่าน &amp; Refactor Theme เก่า ⭐⭐ (หัวใจงาน redesign)</span>
+    <span class="badge soon">รอสร้าง</span>
+    <p class="muted" style="margin:6px 0 0">anatomy theme StanleyWP · page templates 20 ไฟล์ · ของเดิมที่ reuse · ทางเลือก (ก) แทน markup vs (ข) retrofit</p>
+    <span class="mission">🎯 single-whattosee.php เวอร์ชันจริง — แม่แบบของทุกหน้า</span>
+  </div>
+
+  <div class="card disabled">
+    <span class="week-off">Week 8 — GEO/AEO Schema: JSON-LD ฝั่ง Server ⭐</span>
+    <span class="badge soon">รอสร้าง</span>
+    <p class="muted" style="margin:6px 0 0">@graph + @id · binding map schema↔ACF · wp_json_encode vs esc_js · summary_th = Quick Answer</p>
+    <span class="mission">🎯 Phase 3: schema ครบ + ผ่าน Google Rich Results Test</span>
+  </div>
+
+  <div class="card disabled">
+    <span class="week-off">Week 9 — Security + Deploy (ปิดแทร็ก)</span>
+    <span class="badge soon">รอสร้าง</span>
+    <p class="muted" style="margin:6px 0 0">escape/sanitize/nonce ครบวงจร · case study จริง: webshell ใน uploads + secret hardcode (R4) · GitLab CI + deploy เฉพาะ theme</p>
+    <span class="mission">🎯 Phase 4: SECURITY.md audit checklist + .gitlab-ci.yml lint</span>
+  </div>
+
+  <h2>🗺 โครงแทร็ก ↔ เฟสงานจริง (SDLC Playbook docs/08)</h2>
+  <div class="card">
+    <table>
+      <tr><th>เฟสงาน redesign</th><th>สัปดาห์</th><th>ได้อะไร</th></tr>
+      <tr><td><span class="badge phase">Phase 0</span> Setup</td><td>W1</td><td>sandbox ตรง production + เข้าใจ mental model</td></tr>
+      <tr><td>เข้าใจระบบข้อมูล</td><td>W2-5</td><td>stack ปลั๊กอิน · data model 18 CPT · ACF 24 groups · 8 ภาษา</td></tr>
+      <tr><td><span class="badge phase">Phase 1-2</span> Core templates</td><td>W6-7</td><td>header + unibar + single-whattosee (แม่แบบทุกหน้า)</td></tr>
+      <tr><td><span class="badge phase">Phase 3</span> GEO/AEO</td><td>W8</td><td>JSON-LD ผ่าน Rich Results — เป้าธุรกิจหลัก</td></tr>
+      <tr><td><span class="badge phase">Phase 4</span> Hardening</td><td>W9</td><td>security audit + CI + deploy workflow</td></tr>
+    </table>
+  </div>
+
+  <div class="warn">
+    <strong>⚠️ กติกาเหล็ก:</strong> เว็บจริง + โฟลเดอร์ Fujisawa V2.1 = <strong>read-only</strong> (case study เท่านั้น) ·
+    ทุก Mission ทำใน <code>sandbox/</code> · งานจริงเข้า GitLab บริษัท · GitHub public เอาเฉพาะ repo generic ที่กลั่นความรู้ (ไม่มีโค้ด/ข้อมูลบริษัท)
+  </div>
+
+  <h2>📐 เอกสารประกอบ</h2>
+  <div class="card">
+    <p style="margin:0 0 8px"><strong>ในแทร็กนี้:</strong> <code>ROADMAP.md</code> (แผน 9 สัปดาห์ v2) · <code>README.md</code> (กติกา + action items)</p>
+    <p style="margin:0 0 8px"><strong>มาตรฐานจากแทร็กหลัก</strong> (<code>D:\Claude Cowork\Full Stack Dev\course\</code>): <code>lesson-standards.md</code> (โครงบทเรียน 7 ส่วน) · <code>portfolio-standard.md</code> · <code>ai-workflow.md</code> · <code>friday-rebuild.md</code> · <code>SPACED-REVIEW.md</code></p>
+    <p style="margin:0"><strong>แหล่งความจริงโปรเจค</strong> (read-only): <code>…\Fujisawa V.2.1 for Development\docs\</code> (01-08 + README) · <code>…\dev-starter\</code> (functions / single-whattosee / ACF export จริง)</p>
+  </div>
+
+  <footer>PHP Full Stack Track × Discover Fujisawa V2.1 · 2026 · mission-based learning ผ่านงานจริง</footer>
+</div>
+</body>
+</html>

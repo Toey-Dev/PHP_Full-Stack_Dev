@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 8 — GEO/AEO Schema: JSON-LD ฝั่ง Server</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="crumb"><a href="../index.html">PHP Full Stack Track</a> · Week 8</div>
+    <h1>🤖 GEO/AEO Schema — JSON-LD ฝั่ง Server</h1>
+    <p>มีหน้า single ที่ดึงข้อมูลครบแล้ว (Week 7) — แต่เป้าธุรกิจ<strong>อันดับ 1</strong>ของ redesign Fujisawa คือทำให้
+    AI search (ChatGPT, Google AI, Perplexity) "อ่านออกและยกไปตอบ" · บทนี้เจาะ JSON-LD schema ที่ทำให้เครื่องเข้าใจเว็บ
+    — และทำไมมัน<strong>ต้อง render ฝั่ง server</strong> (บทเรียนจากความพลาดจริงของโปรเจค)</p>
+    <p style="margin-top:10px;font-size:.9rem;opacity:.85">⏱ เนื้อหา ~3 ชม. + Mission ~4 ชม. · 🎯 Mission (Phase 3): เติม schema จนผ่าน Google Rich Results Test</p>
+  </div>
+</header>
+<div class="wrap">
+
+  <div class="card">
+    <h3 style="margin-top:0">🔑 คีย์เวิร์ดภาพจำ</h3>
+    <div class="kw-row">
+      <span class="kw">🤖 crawler ไม่รัน JS — schema ต้องมากับ HTML</span>
+      <span class="kw">📋 JSON-LD = ป้ายข้อมูลที่เครื่องอ่าน (ซ่อนจากคน)</span>
+      <span class="kw">🕸 @graph เดียวต่อหน้า · @id ผูกกัน</span>
+      <span class="kw">💬 summary_th = คำตอบที่ AI จะยกไปตอบ (Quick-Answer)</span>
+      <span class="kw">🏗 สร้าง array → wp_json_encode (ปลอดภัยกว่า echo มือ)</span>
+      <span class="kw">🚫 ห้าม hardcode — ทุกค่าดึงจาก ACF</span>
+    </div>
+  </div>
+
+  <h2>🧠 แนวคิด & หลักการ</h2>
+  <div class="card">
+    <h3>หลักการ 1: GEO/AEO — เขียนเว็บให้ "เครื่องอ่าน" ไม่ใช่แค่ "คนอ่าน"</h3>
+    <p><strong>ปัญหาที่มันแก้:</strong> ยุคนี้คนหาข้อมูลผ่าน AI ("ที่เที่ยว Fujisawa มีอะไรบ้าง?") — AI ไม่ได้เปิดเว็บมาอ่านสวยๆ แบบมนุษย์
+    มันต้องการ<em>ข้อมูลที่มีโครงสร้างชัด</em>ให้ดึงไปตอบได้แม่นยำ · <strong>GEO</strong> (Generative Engine Optimization) + <strong>AEO</strong> (Answer Engine Optimization)
+    คือการทำเว็บให้ AI "เข้าใจและยกไปตอบ" — ต่อยอดจาก SEO เดิม</p>
+    <p><strong>เปรียบเปรย:</strong> JSON-LD = <em>ป้ายราคา/ฉลากสินค้าที่เขียนเป็นบาร์โค้ด</em> · คนดูรูปกับชื่อก็รู้ว่าเป็นอะไร
+    แต่เครื่องสแกน (AI/crawler) อ่านบาร์โค้ดได้ข้อมูลครบถ้วนแม่นยำกว่า — ราคา น้ำหนัก แหล่งผลิต · JSON-LD คือ "บาร์โค้ด" ที่ซ่อนในหน้าเว็บให้เครื่องอ่าน</p>
+
+    <h3>หลักการ 2: 🔴 crawler ไม่รัน JavaScript — schema ต้องมากับ HTML ตั้งแต่ต้น</h3>
+    <p>นี่คือหลักที่<strong>พลาดไม่ได้</strong> และเป็นบทเรียนจากความผิดพลาดจริงของโปรเจค:</p>
+    <div class="danger"><strong>💥 เหตุการณ์จริง (docs/03):</strong> เครื่องมือตรวจ GEO ชื่อ Otterly เคยพบว่าหน้า <code>/th/sightseeing/</code> ของ Fujisawa
+    render ด้วย JavaScript → <strong>Static score = 0%</strong> = AI/crawler อ่านไม่ได้เลย (เห็นหน้าเปล่า) · แม้เนื้อหาจะโผล่ครบเมื่อคนเปิดดู
+    เพราะ<strong>crawler ส่วนใหญ่ไม่รัน JS</strong> — มันขอ HTML แล้วอ่านทันที ถ้าเนื้อหา/schema มาทีหลังด้วย JS = มองไม่เห็น</div>
+    <p><strong>เปรียบเปรย:</strong> ใส่ schema ด้วย JS = <em>ส่งจดหมายที่หมึกจะปรากฏหลังเปิดซอง 5 นาที</em> · คนใจเย็นรอได้ แต่ไปรษณีย์ (crawler) ที่สแกนซองแล้วส่งต่อทันทีเห็นซองเปล่า
+    · <strong>กฎเหล็ก: JSON-LD ต้อง render ด้วย PHP ฝั่ง server</strong> — อยู่ใน HTML ตั้งแต่ครั้งแรกที่ตอบกลับ</p>
+
+    <h3>หลักการ 3: summary_th ต้องอยู่บนสุด — "Quick-Answer" ที่ AI ยกไปตอบ</h3>
+    <p>โยง Week 4: field <code>summary_th</code> (2-3 ประโยคตอบ "ที่นี่คืออะไร น่าไปไหม") ไม่ใช่แค่กล่องสรุปสวยๆ —
+    มันคือ<strong>คำตอบสำเร็จรูปที่ AI จะดึงไปตอบผู้ใช้โดยตรง</strong> · จึงต้องอยู่บนสุดของหน้า (ทั้งใน HTML และใน schema <code>description</code>)
+    · หลักคิด AEO: เขียนคำตอบให้ AI ยกไปใช้ได้เลย ไม่ต้องให้มันเดา</p>
+  </div>
+
+  <figure class="figure">
+    <svg viewBox="0 0 760 250" xmlns="http://www.w3.org/2000/svg" font-family="Sarabun,sans-serif" role="img" aria-label="server-side vs JS-side schema">
+      <rect x="20" y="30" width="345" height="190" rx="10" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+      <text x="192" y="55" text-anchor="middle" font-size="13" font-weight="bold" fill="#047857">✅ Server-side (PHP)</text>
+      <text x="192" y="80" text-anchor="middle" font-size="11" fill="#1f2937">1. crawler ขอหน้า</text>
+      <text x="192" y="100" text-anchor="middle" font-size="11" fill="#1f2937">2. PHP สร้าง HTML + JSON-LD พร้อม</text>
+      <text x="192" y="120" text-anchor="middle" font-size="11" fill="#1f2937">3. ส่ง HTML ที่มี schema ครบ</text>
+      <text x="192" y="140" text-anchor="middle" font-size="11" fill="#047857">4. crawler อ่านได้ทันที ✓</text>
+      <rect x="55" y="155" width="275" height="48" rx="6" fill="#fff" stroke="#059669"/>
+      <text x="192" y="175" text-anchor="middle" font-size="9.5" fill="#1f2937">&lt;script type="application/ld+json"&gt;</text>
+      <text x="192" y="192" text-anchor="middle" font-size="9.5" fill="#1f2937">{...} ← อยู่ใน HTML แล้ว</text>
+      <rect x="395" y="30" width="345" height="190" rx="10" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+      <text x="567" y="55" text-anchor="middle" font-size="13" font-weight="bold" fill="#dc2626">❌ JS-side</text>
+      <text x="567" y="80" text-anchor="middle" font-size="11" fill="#1f2937">1. crawler ขอหน้า</text>
+      <text x="567" y="100" text-anchor="middle" font-size="11" fill="#1f2937">2. ได้ HTML เปล่า (schema ยังไม่มา)</text>
+      <text x="567" y="120" text-anchor="middle" font-size="11" fill="#1f2937">3. JS จะเติม schema... แต่</text>
+      <text x="567" y="140" text-anchor="middle" font-size="11" fill="#dc2626">4. crawler ไม่รัน JS → เห็นเปล่า ✗</text>
+      <rect x="430" y="155" width="275" height="48" rx="6" fill="#fff" stroke="#dc2626"/>
+      <text x="567" y="177" text-anchor="middle" font-size="10" fill="#dc2626">Otterly Static score = 0%</text>
+      <text x="567" y="193" text-anchor="middle" font-size="9.5" fill="#6b7280">AI มองไม่เห็นเว็บเลย</text>
+    </svg>
+    <figcaption>ภาพที่ 1: schema ฝั่ง server (ซ้าย) crawler อ่านได้ · ฝั่ง JS (ขวา) crawler เห็นหน้าเปล่า — บทเรียนจาก Otterly 0% ของจริง</figcaption>
+  </figure>
+
+  <h2>ส่วนที่ 1: โครงสร้าง @graph — schema เดียวต่อหน้า</h2>
+  <div class="card">
+    <p><strong>เปรียบเปรย:</strong> <code>@graph</code> = <em>แผนผังครอบครัวในหน้าเดียว</em> · แทนที่จะมี schema กระจัดกระจายหลายก้อน
+    รวมทุกอย่างของหน้านั้นไว้ใน graph เดียว แล้วใช้ <code>@id</code> เป็น "เลขบัตรประชาชน" ผูกความสัมพันธ์ (เช่น บทความนี้ publisher คือ Organization <code>#org</code>)</p>
+    <table>
+      <tr><th>schema type</th><th>ใช้ที่</th><th>ดึงจาก (ห้าม hardcode!)</th></tr>
+      <tr><td><code>Organization</code> + <code>WebSite</code></td><td>ทุกหน้า (global)</td><td>Theme Options (ACF) — ชื่อ/โลโก้/social</td></tr>
+      <tr><td><code>TouristAttraction</code></td><td>หน้าสถานที่</td><td>CPT whattosee — title, summary_th, geo_lat/lng, hours</td></tr>
+      <tr><td><code>FAQPage</code></td><td>หน้าที่มี FAQ</td><td>ACF repeater <code>faq</code> (loop q/a)</td></tr>
+      <tr><td><code>BreadcrumbList</code></td><td>ทุกหน้า</td><td>สร้างจาก permalink อัตโนมัติ</td></tr>
+      <tr><td><code>SpecialAnnouncement</code></td><td>แถบข่าวฉุกเฉิน</td><td>CPT news ที่ category=emergency (Week 6!)</td></tr>
+    </table>
+    <div class="tip"><strong>เชื่อม skill:</strong> วีมี skill <code>wp-schema-geo</code> ในเครื่อง — ใช้ audit/generate JSON-LD ได้ · แต่ต้อง<em>เข้าใจว่ามันสร้างอะไร</em>ก่อนใช้ (นอก Mission ใช้ AI ได้ · แต่ review ทุกบรรทัด)</div>
+  </div>
+
+  <h2>ส่วนที่ 2: อ่านโค้ดจริง — สร้าง JSON-LD ใน single-whattosee.php</h2>
+  <div class="card">
+    <p>dev-starter เลือกวิธี <strong>"สร้าง PHP array แล้ว <code>wp_json_encode()</code>"</strong> — ปลอดภัยกว่าการ echo JSON ด้วยมือ · อ่านทีละส่วน:</p>
+<pre><code>$graph = [                                       // 1
+  [
+    '@type'       =&gt; 'TouristAttraction',        // 2
+    'name'        =&gt; get_the_title(),            // 3
+    'description' =&gt; $summary,                    // 4 ← summary_th (Quick-Answer)
+    'image'       =&gt; get_the_post_thumbnail_url(null,'large'),
+    'address'     =&gt; [
+      '@type' =&gt; 'PostalAddress',
+      'addressLocality' =&gt; 'Fujisawa',
+      'addressRegion'   =&gt; 'Kanagawa',
+      'addressCountry'  =&gt; 'JP',
+    ],
+  ],
+];
+if ($lat &amp;&amp; $lng) {                               // 5
+  $graph[0]['geo'] = [
+    '@type' =&gt; 'GeoCoordinates',
+    'latitude' =&gt; $lat, 'longitude' =&gt; $lng,
+  ];
+}
+if ($faq) {                                      // 6
+  $items = [];
+  foreach ($faq as $row) {
+    $items[] = [
+      '@type' =&gt; 'Question',
+      'name'  =&gt; $row['q'],
+      'acceptedAnswer' =&gt; ['@type'=&gt;'Answer','text'=&gt;$row['a']],
+    ];
+  }
+  $graph[] = ['@type'=&gt;'FAQPage','mainEntity'=&gt;$items];  // 7
+}
+
+$ld = ['@context' =&gt; 'https://schema.org', '@graph' =&gt; $graph];  // 8
+echo '&lt;script type="application/ld+json"&gt;'
+   . wp_json_encode($ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)  // 9
+   . '&lt;/script&gt;';</code></pre>
+    <table>
+      <tr><th>บรรทัด</th><th>ทำไมต้องมี (ไม่ใช่แค่ทำอะไร)</th></tr>
+      <tr><td>1-2</td><td>เริ่ม graph ด้วย TouristAttraction — เป็น PHP array ธรรมดา (ยังไม่ใช่ JSON) เพื่อให้ต่อเติม/เช็คเงื่อนไขได้ง่าย</td></tr>
+      <tr><td>3-4</td><td>ทุกค่าดึงจาก DB (<code>get_the_title()</code> ผ่าน qTranslate · <code>$summary</code> = ACF) — <strong>ไม่ hardcode</strong> · description = summary_th ที่ AI ยกไปตอบ</td></tr>
+      <tr><td>5-6</td><td>เติม geo/faq <strong>เฉพาะเมื่อมีข้อมูล</strong> (guard clause — Week 4) · ถ้าไม่มีพิกัดแล้วใส่ geo ว่าง = schema error</td></tr>
+      <tr><td>7</td><td>เพิ่ม FAQPage เป็นสมาชิกใหม่ใน graph — หลาย schema type อยู่ในหน้าเดียวได้ผ่าน @graph</td></tr>
+      <tr><td>8</td><td>ห่อด้วย <code>@context</code> + <code>@graph</code> = "schema เดียวต่อหน้า"</td></tr>
+      <tr><td>9</td><td><strong>หัวใจ:</strong> <code>wp_json_encode()</code> สร้าง JSON ที่ถูก syntax เสมอ (ไม่มี trailing comma, escape ถูก) · <code>JSON_UNESCAPED_UNICODE</code> = ภาษาไทย/ญี่ปุ่นไม่กลายเป็น <code>\u...</code> อ่านออก</td></tr>
+    </table>
+  </div>
+
+  <h2>ส่วนที่ 3: 2 วิธีเขียน JSON-LD — ทำไม array ปลอดภัยกว่า echo มือ</h2>
+  <div class="card">
+    <div class="compare">
+      <div>
+        <h3 style="color:#dc2626">❌ echo JSON ด้วยมือ (docs/03 แบบ copy-paste)</h3>
+<pre><code>echo '{
+  "@type": "FAQPage",
+  "mainEntity": [';
+foreach ($faq as $row) {
+  echo '{ "name": "'
+    . esc_js($row['q']) . '" },';  // ← comma!
+}
+echo ']}';</code></pre>
+        <p class="muted" style="margin-top:8px">เสี่ยง: <strong>trailing comma</strong> หลัง element สุดท้าย = JSON พัง · ต้อง <code>esc_js()</code> ทุกค่าเอง · ลืมจุดเดียว schema ทั้งหน้าใช้ไม่ได้</p>
+      </div>
+      <div>
+        <h3 style="color:#047857">✅ สร้าง array → wp_json_encode</h3>
+<pre><code>$items = [];
+foreach ($faq as $row) {
+  $items[] = [
+    'name' =&gt; $row['q'],  // ไม่ต้องห่วง comma
+  ];
+}
+echo wp_json_encode(
+  ['mainEntity' =&gt; $items]
+);</code></pre>
+        <p class="muted" style="margin-top:8px">PHP จัดการ comma/escape/syntax ให้หมด · เพิ่ม/ลบ field ไม่พัง · อ่านง่าย debug ง่าย</p>
+      </div>
+    </div>
+    <div class="warn"><strong>กฎทอง:</strong> อย่าประกอบ JSON เป็น string ด้วยมือถ้าเลี่ยงได้ — ให้ภาษาสร้างให้ (PHP=<code>wp_json_encode</code>, JS=<code>JSON.stringify</code>) ·
+    string manipulation กับ JSON = บั๊ก syntax ที่หายากและ schema พังเงียบ (Google อ่านไม่ออกแต่ไม่มี error ในหน้า)</div>
+  </div>
+
+  <h2>ส่วนที่ 4: ⚠️ qTranslate กับ JSON-LD (โยง Week 5)</h2>
+  <div class="card">
+    <p>จำกับดักจาก Week 5 ได้ไหม — ข้อความหลายภาษาที่ไม่ผ่าน filter จะโผล่แท็กดิบ <code>[:th]...</code> · ใน JSON-LD ต้องระวังเป็นพิเศษ:</p>
+    <ul>
+      <li><strong>ผ่าน filter อัตโนมัติ:</strong> <code>get_the_title()</code>, <code>get_field()</code> — ตัดภาษาให้แล้ว ใส่ใน graph ได้เลย</li>
+      <li><strong>ต้องจัดการเอง:</strong> ถ้าดึงข้อความหลายภาษาแบบ raw มาประกอบ ต้อง <code>qtranxf_use_language()</code> ก่อน ไม่งั้น AI อ่านเจอ <code>[:en]Sea Candle[:th]...</code> ทั้งก้อน = ข้อมูลขยะเข้า schema</li>
+    </ul>
+    <div class="danger"><strong>ทำไมร้ายกว่าปกติ:</strong> แท็กดิบบนหน้าเว็บคนเห็นแล้วรู้ว่าบั๊ก · แต่ในJSON-LD ที่ซ่อนอยู่ คนไม่เห็น — <strong>AI ดูดข้อมูลเสียไปตอบผู้ใช้โดยเราไม่รู้ตัว</strong> ·
+    ต้องทดสอบด้วย Rich Results Test + ดู view-source ทุกภาษา</div>
+  </div>
+
+  <h2>ตัวอย่างประยุกต์</h2>
+  <div class="card">
+    <p><strong>🏢 งานวี:</strong> Acceptance Criteria จริงของโปรเจค (docs/03 §5) วัดด้วย <strong>Google Rich Results Test</strong> ผ่านไม่มี error
+    + <strong>Otterly.AI Static ≥ 90%</strong> ทุกภาษา · Mission สัปดาห์นี้ทำให้ single-whattosee.php ผ่านเกณฑ์นี้จริง = Phase 3 ของงาน redesign</p>
+    <p><strong>🌏 อุตสาหกรรม:</strong> ทุกเว็บที่อยากติด "rich result" ใน Google (ดาวรีวิว, ราคา, FAQ ที่ขยายได้, สูตรอาหาร) ใช้ JSON-LD · e-commerce ใหญ่ (ราคา+สต็อก),
+    เว็บข่าว (NewsArticle), เว็บสูตรอาหาร (Recipe) · ยุค AI search นี้ schema กลายจาก "nice to have" เป็น "ต้องมี" เพราะเป็นภาษาที่ AI เข้าใจตรงที่สุด</p>
+  </div>
+
+  <h2>🧹 Clean Code ประจำ Week 8 — สร้าง schema ให้สะอาด</h2>
+  <div class="card">
+    <h3>1. สร้าง array แล้ว encode — ไม่ต่อ string JSON เอง</h3>
+    <div class="clean">
+      <div class="bad"><h4>❌ heredoc JSON — เปราะ escape ยาก</h4>
+<pre><code>echo "&lt;script&gt;{
+  \"name\": \"" . $name . "\",
+  \"lat\": " . $lat . "
+}&lt;/script&gt;";
+// $name มี " = พัง · ลืม escape</code></pre></div>
+      <div class="good"><h4>✅ array → wp_json_encode</h4>
+<pre><code>$data = ['name' =&gt; $name, 'lat' =&gt; $lat];
+echo '&lt;script type="application/ld+json"&gt;'
+  . wp_json_encode($data)
+  . '&lt;/script&gt;';
+// escape/comma/quote ปลอดภัยหมด</code></pre></div>
+    </div>
+
+    <h3>2. เติม field เฉพาะที่มีค่า — ไม่ยัด null เข้า schema</h3>
+    <div class="clean">
+      <div class="bad"><h4>❌ ใส่ทุก field แม้ว่าง = schema error</h4>
+<pre><code>$g['geo'] = [
+  'latitude'  =&gt; $lat,  // ว่าง = null
+  'longitude' =&gt; $lng,
+];
+// ไม่มีพิกัด → geo ว่าง → validator ฟ้อง</code></pre></div>
+      <div class="good"><h4>✅ guard clause ก่อนเติม</h4>
+<pre><code>if ($lat &amp;&amp; $lng) {
+  $g['geo'] = [
+    'latitude'=&gt;$lat,'longitude'=&gt;$lng
+  ];
+}
+// ไม่มีข้อมูล = ไม่ใส่ key เลย</code></pre></div>
+    </div>
+    <div class="warn"><strong>กฎทอง:</strong> schema ที่ดี = "มีเฉพาะข้อมูลที่จริงและครบ" — ใส่ field ว่าง/เดาๆ ทำให้ validator ฟ้องหรือ AI ได้ข้อมูลผิด ·
+    น้อยแต่ถูก ดีกว่ามากแต่มั่ว</div>
+  </div>
+
+  <h2>🎯 Mission 8 — เติม JSON-LD จนผ่าน Rich Results Test (Phase 3)</h2>
+  <div class="danger" style="margin-bottom:16px">
+    🤖 <strong>กฎ AI สองโหมด:</strong> ปิด AI เขียนมือ · skill <code>wp-schema-geo</code> ใช้ตอนทบทวน/audit ได้ แต่ Mission เขียนเอง · ติดเกิน 20 นาทีขอ hint
+  </div>
+  <div class="mission">
+    <h3>เป้าหมาย <span class="badge orange">~4 ชม.</span></h3>
+    <p>ต่อยอด single-whattosee.php จาก Week 7 — เติม schema ครบจนผ่านเกณฑ์ Acceptance จริงของโปรเจค</p>
+
+    <div class="step"><div class="num">1</div><div>
+      <strong>TouristAttraction + FAQPage + BreadcrumbList</strong> ใน single-whattosee.php — สร้างเป็น PHP array แล้ว <code>wp_json_encode</code>
+      · ทุกค่าจาก ACF (Week 4) · geo/faq ใส่เฉพาะเมื่อมี (guard clause)</div></div>
+
+    <div class="step"><div class="num">2</div><div>
+      <strong>Organization + WebSite global</strong> — ฝังใน header.php/functions.php ทุกหน้า · ผูก <code>@id</code> (publisher → #org)</div></div>
+
+    <div class="step"><div class="num">3</div><div>
+      <strong>SpecialAnnouncement</strong> ในแถบ Unibar (ต่อจาก Week 6) — เมื่อมีข่าว emergency → output schema ข่าวด่วน · ไม่มี → ไม่ output</div></div>
+
+    <div class="step"><div class="num">4</div><div>
+      <strong>ทดสอบผ่านเกณฑ์จริง</strong> — เอา URL/โค้ด HTML ไปตรวจที่ <strong>Google Rich Results Test</strong> + <strong>Schema.org Validator</strong>
+      → ต้องไม่มี error · เช็ค view-source ว่า JSON-LD อยู่ใน HTML (ไม่ใช่ JS เติม) · ทดสอบ 2 ภาษาดูไม่มีแท็ก <code>[:xx]</code> ดิบ</div></div>
+
+    <div class="step"><div class="num">5</div><div>
+      <strong>push GitHub</strong> — repo generic <code>wp-jsonld-schema-kit</code> (ตัวอย่างสร้างเอง) · README: อธิบายแต่ละ schema type + binding กับ field ไหน + ผลตรวจ Rich Results + AI Usage</div></div>
+  </div>
+
+  <div class="card">
+    <h3>✅ Definition of Done</h3>
+    <ul class="check">
+      <li>JSON-LD อยู่ใน view-source (server-side ไม่ใช่ JS) · ผ่าน Google Rich Results Test ไม่มี error</li>
+      <li>TouristAttraction + FAQPage + BreadcrumbList + Organization/WebSite ครบ · ทุกค่าจาก ACF (ไม่ hardcode)</li>
+      <li>SpecialAnnouncement เด้งเฉพาะเมื่อมีข่าว emergency · geo/faq ใส่เฉพาะเมื่อมีข้อมูล</li>
+      <li>ทดสอบ 2 ภาษา ไม่มีแท็ก <code>[:xx]</code> ดิบใน schema · README + Quiz ครบ</li>
+    </ul>
+  </div>
+
+  <h2>📝 Quiz — ทดสอบความเข้าใจ</h2>
+  <details><summary>ข้อ 1: ทำไม JSON-LD ต้อง render ฝั่ง server (PHP) ห้ามใส่ด้วย JavaScript?</summary>
+    <p>เพราะ crawler/AI ส่วนใหญ่<strong>ไม่รัน JavaScript</strong> — มันขอ HTML แล้วอ่านทันที · ถ้า schema มากับ JS (เติมทีหลัง) crawler เห็นหน้าเปล่า = อ่านไม่ได้
+    · เหตุการณ์จริง: Otterly พบ /th/sightseeing/ render ด้วย JS → Static 0% = AI มองไม่เห็นเว็บเลย · schema ต้องอยู่ใน HTML ตั้งแต่ response แรก</p></details>
+  <details><summary>ข้อ 2: ทำไมสร้าง PHP array แล้ว wp_json_encode ปลอดภัยกว่า echo JSON เป็น string เอง?</summary>
+    <p>เพราะ <code>wp_json_encode()</code> จัดการ syntax ให้ถูกเสมอ: ไม่มี trailing comma, escape quote/อักขระพิเศษถูก, โครงสร้างถูก · การต่อ string เองเสี่ยง trailing comma หลัง element สุดท้าย (JSON พัง)
+    + ลืม escape ค่าที่มี <code>"</code> · schema ที่ syntax พังจะอ่านไม่ออกโดยไม่มี error เตือนในหน้า — หายากมาก</p></details>
+  <details><summary>ข้อ 3 (security/production): ข้อความหลายภาษาที่ไม่ผ่าน qTranslate filter หลุดเข้า JSON-LD — ทำไมร้ายกว่าหลุดบนหน้าเว็บ?</summary>
+    <p>บนหน้าเว็บคนเห็นแท็กดิบ <code>[:th]...</code> แล้วรู้ทันทีว่าบั๊ก แจ้งแก้ได้ · แต่ใน JSON-LD ซ่อนอยู่ (คนไม่เห็น) → AI/crawler ดูดข้อมูลที่มีแท็กดิบไปตอบผู้ใช้โดยเราไม่รู้ตัว = ข้อมูลขยะกระจาย ·
+    ป้องกัน: ใช้ <code>get_field()</code>/<code>the_title()</code> (ผ่าน filter) หรือ <code>qtranxf_use_language()</code> ถ้าประกอบเอง + ทดสอบ Rich Results ทุกภาษา</p></details>
+  <details><summary>ข้อ 4: field summary_th ควรอยู่ตรงไหนของหน้าและ schema? เพราะอะไร (หลัก AEO)?</summary>
+    <p>อยู่<strong>บนสุด</strong>ของหน้า (HTML) และเป็น <code>description</code> ใน schema · เพราะมันคือ "Quick-Answer" — คำตอบสำเร็จรูป 2-3 ประโยคที่ AI จะยกไปตอบผู้ใช้โดยตรง ("ที่นี่คืออะไร น่าไปไหม")
+    · หลัก AEO: เขียนคำตอบให้ AI หยิบใช้ได้ทันทีไม่ต้องเดา + วางตำแหน่งเด่นให้ทั้งคนและเครื่องเจอก่อน</p></details>
+
+  <div class="card" style="border:2px solid var(--brand)">
+    <h3 style="margin-top:0">⏭ สัปดาห์หน้า (สัปดาห์สุดท้าย)</h3>
+    <p style="margin:0"><strong>Week 9 — Security + Deploy: ปิดแทร็ก (Phase 4):</strong>
+    เก็บ security ครบวงจร (escape ทบทวน + ขาเข้า nonce/sanitize) + <strong>case study จริงจากจุดแข็ง pentest ของวี</strong>: webshell ใน uploads + secret hardcode ·
+    วงจร deploy มืออาชีพ (GitLab CI → rsync เฉพาะ theme → rollback) · Mission ปิดแทร็ก: SECURITY.md audit checklist</p>
+  </div>
+
+  <div class="nav-bottom">
+    <a class="btn ghost" href="../week-07/index.html">← Week 7</a>
+    <a class="btn ghost" href="../index.html">หน้ารวมคอร์ส</a>
+    <span class="btn" style="background:#9ca3af;cursor:default">Week 9 (รอสร้าง) →</span>
+  </div>
+  <footer>PHP Full Stack Track × Fujisawa V2.1 · Week 8 · มาตรฐานบทเรียน 7 ส่วน</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 7 — อ่าน & Refactor Theme เก่า: หัวใจงาน redesign</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="crumb"><a href="../index.html">PHP Full Stack Track</a> · Week 7</div>
+    <h1>🏗 อ่าน &amp; Refactor Theme เก่า — หัวใจงาน redesign</h1>
+    <p>ความจริงที่ tutorial ไม่บอก: งาน dev ส่วนใหญ่ในโลกจริง<strong>ไม่ใช่การสร้างใหม่ แต่คือการแก้ของเดิม</strong> —
+    theme <code>fujisawa</code> เป็น StanleyWP/Bootstrap 4 อายุ 4 ปี ที่รันอยู่บน production · งาน redesign คือรีโนเวทมัน ไม่ใช่ทุบทิ้ง
+    · บทนี้สอนทักษะที่ทรงคุณค่าที่สุดของ dev: อ่านโค้ดคนอื่นให้ขาด รู้ว่าอะไร reuse อะไรรื้อ</p>
+    <p style="margin-top:10px;font-size:.9rem;opacity:.85">⏱ เนื้อหา ~3-4 ชม. + Mission ~4-5 ชม. · 🎯 Mission: single-whattosee.php เวอร์ชันจริง — แม่แบบของทุกหน้า</p>
+  </div>
+</header>
+<div class="wrap">
+
+  <div class="card">
+    <h3 style="margin-top:0">🔑 คีย์เวิร์ดภาพจำ</h3>
+    <div class="kw-row">
+      <span class="kw">📖 อ่านของเดิมก่อนเขียนของใหม่</span>
+      <span class="kw">🏠 refactor = รีโนเวทบ้าน ไม่ใช่ทุบสร้างใหม่</span>
+      <span class="kw">📇 functions.php = สารบัญ ไม่ใช่โกดัง</span>
+      <span class="kw">🤝 class ในดีไซน์ = สัญญากับ CSS (ห้ามผิดสัญญา)</span>
+      <span class="kw">♻️ reuse ของเดิมที่ดี · รื้อเฉพาะที่ต้อง</span>
+      <span class="kw">🔀 (ก) แทน markup vs (ข) retrofit — เลือกต่อหน้า</span>
+    </div>
+  </div>
+
+  <h2>🧠 แนวคิด & หลักการ</h2>
+  <div class="card">
+    <h3>หลักการ 1: "อ่านโค้ดคนอื่นให้ขาด" คือทักษะที่ตลาดจ่ายแพงที่สุด</h3>
+    <p><strong>ปัญหาที่มันแก้:</strong> มือใหม่เจอ codebase เก่าแล้วอยากเขียนใหม่หมด ("โค้ดนี้เก่า/งง เขียนใหม่เร็วกว่า") —
+    แต่การเขียนใหม่ = ทิ้งความรู้ที่สะสมมาหลายปี (bug fixes, edge cases, business logic ที่ไม่มีในเอกสาร) + เสี่ยงพังของที่ทำงานอยู่
+    · มือโปรอ่านให้เข้าใจก่อน แล้วแก้เฉพาะจุด</p>
+    <p><strong>เปรียบเปรย:</strong> refactor = <em>รีโนเวทบ้านเก่า</em> · โครงสร้าง/ท่อ/สายไฟที่ยังดีก็เก็บไว้ (reuse) เปลี่ยนเฉพาะที่เก่าจริง (ห้องน้ำ สีผนัง)
+    — ไม่มีใครทุบบ้านทั้งหลังเพราะอยากเปลี่ยนสีห้องนั่งเล่น · การ redesign Fujisawa ก็เหมือนกัน: เก็บ logic ที่ทำงานดี (qTranslate, เวลาทำการ, เมนู) เปลี่ยนเฉพาะ markup/หน้าตา</p>
+
+    <h3>หลักการ 2: รู้จัก anatomy ของ theme ก่อนแตะ</h3>
+    <p>ก่อนแก้บ้าน ต้องรู้ว่าห้องไหนอยู่ตรงไหน · theme WordPress มีโครงมาตรฐานที่ต้องอ่านออก:</p>
+    <table>
+      <tr><th>โฟลเดอร์/ไฟล์</th><th>หน้าที่ (เปรียบเปรยบ้าน)</th></tr>
+      <tr><td><code>header.php</code> / <code>footer.php</code></td><td>หัว-ท้ายที่ทุกหน้าใช้ร่วม (หลังคา + ฐานราก)</td></tr>
+      <tr><td>root: <code>single-{cpt}.php</code>, <code>archive-{cpt}.php</code></td><td>ห้องตามชนิด (บันได template hierarchy จาก Week 1)</td></tr>
+      <tr><td><code>templates/*.php</code> (page templates)</td><td>ห้องที่เลือกเองใน admin (ทางลัดข้ามบันได — Week 1)</td></tr>
+      <tr><td><code>template-parts/*.php</code></td><td>ชิ้นส่วนที่ reuse ได้ (การ์ด, แบนเนอร์ — เฟอร์นิเจอร์ยกไปห้องไหนก็ได้)</td></tr>
+      <tr><td><code>inc/*.php</code></td><td>ระบบหลังบ้าน (enqueue, helper, menu — ท่อ/สายไฟ)</td></tr>
+      <tr><td><code>functions.php</code></td><td>สารบัญที่ <code>require</code> ไฟล์ inc/ ทั้งหมด</td></tr>
+    </table>
+
+    <h3>หลักการ 3: เมื่อไหร่แทน markup (ก) / เมื่อไหร่ retrofit (ข)</h3>
+    <p>docs/07 ให้ 2 ทางเลือก — เลือก<em>ต่อหน้า</em>ไม่ใช่ทั้งเว็บ:</p>
+    <table>
+      <tr><th></th><th>(ก) แทนที่ markup</th><th>(ข) retrofit</th></tr>
+      <tr><td>ทำอะไร</td><td>รื้อ markup Bootstrap เดิม วาง markup + styles.css ดีไซน์ใหม่</td><td>คงโครง Bootstrap เดิม ปรับ SCSS ให้ใกล้ดีไซน์</td></tr>
+      <tr><td>ข้อดี</td><td>ตรงดีไซน์ 100% · ได้ Unibar/hero/GEO ตามออกแบบ</td><td>เร็ว เสี่ยงพังน้อย</td></tr>
+      <tr><td>ข้อเสีย</td><td>งานเยอะ · ต้องถอด Bootstrap/SCSS เดิม</td><td>ดีไซน์อาจเพี้ยนจาก grid เดิม</td></tr>
+      <tr><td>ใช้กับ</td><td><strong>หน้า GEO สำคัญ</strong> (หน้าแรก, single-whattosee, news)</td><td>หน้ารองที่โครงใกล้เคียงอยู่แล้ว</td></tr>
+    </table>
+    <p><strong>หลักคิด:</strong> ไม่มีคำตอบเดียวถูก — dev ที่ดีเลือกเครื่องมือตามงาน · หน้าที่ธุรกิจแคร์ (GEO) ลงแรงทำให้ตรง หน้ารองประหยัดแรง</p>
+  </div>
+
+  <figure class="figure">
+    <svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" font-family="Sarabun,sans-serif" role="img" aria-label="anatomy ของ theme fujisawa">
+      <rect x="20" y="20" width="720" height="42" rx="8" fill="#e4eff5" stroke="#15679f" stroke-width="2"/>
+      <text x="380" y="46" text-anchor="middle" font-size="13" font-weight="bold" fill="#0c3f5e">functions.php = สารบัญ (require ไฟล์ inc/ ทั้งหมด)</text>
+      <rect x="20" y="78" width="170" height="80" rx="8" fill="#fff" stroke="#059669" stroke-width="2"/>
+      <text x="105" y="102" text-anchor="middle" font-size="12" font-weight="bold" fill="#047857">♻️ inc/ (reuse!)</text>
+      <text x="105" y="122" text-anchor="middle" font-size="10" fill="#1f2937">scripts.php (enqueue)</text>
+      <text x="105" y="138" text-anchor="middle" font-size="10" fill="#1f2937">template-tags · helper</text>
+      <text x="105" y="153" text-anchor="middle" font-size="9.5" fill="#6b7280">qTranslate · เมนู 4 ชุด</text>
+      <rect x="205" y="78" width="170" height="80" rx="8" fill="#fff" stroke="#15679f" stroke-width="2"/>
+      <text x="290" y="102" text-anchor="middle" font-size="12" font-weight="bold" fill="#0c3f5e">root templates</text>
+      <text x="290" y="122" text-anchor="middle" font-size="10" fill="#1f2937">single-whattosee.php</text>
+      <text x="290" y="138" text-anchor="middle" font-size="10" fill="#1f2937">archive-whattosee.php</text>
+      <text x="290" y="153" text-anchor="middle" font-size="9.5" fill="#6b7280">(บันได hierarchy)</text>
+      <rect x="390" y="78" width="170" height="80" rx="8" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+      <text x="475" y="102" text-anchor="middle" font-size="12" font-weight="bold" fill="#92400e">templates/</text>
+      <text x="475" y="122" text-anchor="middle" font-size="10" fill="#1f2937">home.php · news.php</text>
+      <text x="475" y="138" text-anchor="middle" font-size="10" fill="#1f2937">stay.php · cuisine.php</text>
+      <text x="475" y="153" text-anchor="middle" font-size="9.5" fill="#6b7280">(20 page templates)</text>
+      <rect x="575" y="78" width="165" height="80" rx="8" fill="#fff" stroke="#15679f" stroke-width="2"/>
+      <text x="657" y="102" text-anchor="middle" font-size="12" font-weight="bold" fill="#0c3f5e">template-parts/</text>
+      <text x="657" y="122" text-anchor="middle" font-size="10" fill="#1f2937">content-spot · card</text>
+      <text x="657" y="138" text-anchor="middle" font-size="9.5" fill="#059669">include-opentoday.php</text>
+      <text x="657" y="153" text-anchor="middle" font-size="9" fill="#6b7280">(เวลาทำการ — reuse!)</text>
+      <rect x="120" y="185" width="520" height="72" rx="10" fill="#fef2f2" stroke="#dc2626" stroke-width="1.5"/>
+      <text x="380" y="210" text-anchor="middle" font-size="12" font-weight="bold" fill="#dc2626">⚠️ ก่อนรื้ออะไร — ถามก่อน: "ของเดิมทำงานอยู่ไหม? reuse ได้ไหม?"</text>
+      <text x="380" y="233" text-anchor="middle" font-size="11.5" fill="#1f2937">include-opentoday.php มี logic เวลาทำการครบแล้ว · เมนู 4 ชุด · thumb-medium 740×555</text>
+      <text x="380" y="250" text-anchor="middle" font-size="11" fill="#6b7280">= เก็บไว้ใช้ · รื้อเฉพาะ markup Bootstrap ที่ไม่ตรงดีไซน์</text>
+    </svg>
+    <figcaption>ภาพที่ 1: anatomy ของ theme fujisawa — สีเขียว = reuse ได้เลย · ก่อนรื้อทุกครั้งถามว่า "ของเดิมดีอยู่ไหม"</figcaption>
+  </figure>
+
+  <h2>ส่วนที่ 1: ของเดิมที่ต้อง reuse (อย่าเขียนใหม่!)</h2>
+  <div class="card">
+    <p>docs/07 §4 ระบุชัดว่าอะไร reuse ได้ — การเขียนใหม่ = เสียเวลา + เสี่ยงพังของที่ทำงานดี:</p>
+    <table>
+      <tr><th>ของเดิม</th><th>ทำอะไร · ทำไม reuse</th></tr>
+      <tr><td><code>qtranxf_use_language()</code> · <code>lang_label()</code></td><td>ตัดภาษา 8 ภาษา (Week 5!) — logic ผ่านการใช้จริงมาแล้ว เขียนใหม่ = reinvent + เสี่ยงบั๊ก</td></tr>
+      <tr><td><code>template-parts/include-opentoday.php</code></td><td><strong>มี logic คำนวณเวลาเปิด-ปิดครบแล้ว</strong> — Unibar (Week 6) เอามาใช้ต่อได้เลย ไม่ต้องเขียนใหม่</td></tr>
+      <tr><td>เมนู 4 ชุด (<code>primary</code>, <code>other_menu</code>, <code>special_menu</code>, <code>sightseeing_menu</code>)</td><td>register ไว้แล้ว — แค่เรียก <code>wp_nav_menu()</code> ในที่ใหม่</td></tr>
+      <tr><td><code>thumb-medium</code> 740×555 · <code>set_pagesize</code></td><td>image size + pagination ต่อหน้า (news=10, video=9) ตั้งไว้แล้ว</td></tr>
+      <tr><td>enqueue ผ่าน <code>inc/scripts.php</code></td><td>โหลด CSS/JS ที่เดียว — Week 1 เรียนแล้วว่าห้าม hardcode ใน header</td></tr>
+    </table>
+    <div class="tip"><strong>วิธีอ่านโค้ดคนอื่นให้เร็ว:</strong> ① เริ่มที่ <code>functions.php</code> ดูว่า require อะไรบ้าง (= สารบัญ) ② เปิด <code>inc/scripts.php</code> ดู asset ③ ไล่ template ตาม hierarchy ④ grep หา function name เวลาเจอสิ่งที่ไม่รู้จัก · <strong>อย่าอ่านทีละบรรทัดตั้งแต่ต้น</strong> — ไล่ตามเส้นทางข้อมูล (Week 1)</div>
+  </div>
+
+  <h2>ส่วนที่ 2: 🤝 "class ในดีไซน์ = สัญญากับ CSS" (Risk R10)</h2>
+  <div class="card">
+    <p><strong>เปรียบเปรย:</strong> ในดีไซน์ Fujisawa ไฟล์ <code>styles.css</code> เขียนกฎไว้ว่า <code>.dt-hero { ... }</code>, <code>.answer-card { ... }</code>
+    — class เหล่านี้คือ<em>สัญญา</em>: "ถ้า HTML มี class นี้ CSS จะแต่งหน้าให้แบบนี้" · ถ้า dev เปลี่ยนชื่อ class ใน markup = ผิดสัญญา = CSS หาไม่เจอ = ดีไซน์เพี้ยนทั้งหน้า</p>
+    <div class="danger"><strong>💥 Counter-example (Risk R10):</strong> เผลอเปลี่ยน <code>class="dt-hero"</code> เป็น <code>class="hero-detail"</code> เพราะคิดว่าชื่อสื่อกว่า
+    → <code>styles.css</code> ที่อ้าง <code>.dt-hero</code> หาไม่เจอ → hero กลายเป็นกล่องเปล่าไม่มีสไตล์ · <strong>กฎเหล็ก: รักษา class เดิมที่ styles.css อ้างถึงไว้เป๊ะ</strong> — อยากเปลี่ยนดีไซน์ให้แก้ที่ตัวแปร <code>:root</code> ใน CSS ไม่ใช่ชื่อ class</div>
+    <p><strong>โยงหลักการทอง 3 ข้อของโปรเจค:</strong> "ดีไซน์ HTML = พิมพ์เขียว — ใช้ styles.css เดิม ไม่ออกแบบใหม่ รักษา class เดิม" · งานของ dev คือ<em>ห่อ markup ด้วย PHP</em> ไม่ใช่แต่งหน้าใหม่</p>
+  </div>
+
+  <h2>ส่วนที่ 3: อ่านโค้ดจริง — โครงของ <code>single-whattosee.php</code></h2>
+  <div class="card">
+    <p>ไฟล์ dev-starter <code>single-whattosee.php</code> คือแม่แบบที่ Mission จะทำ · โครงของมัน = "รีโนเวท": เก็บ HTML/class จากดีไซน์ + เสียบ PHP ดึงข้อมูล:</p>
+<pre><code>&lt;?php get_header(); ?&gt;                            // 1
+
+&lt;?php while (have_posts()): the_post();          // 2
+  $summary = get_field('summary_th');            // 3
+  $hours   = get_field('opening_hours');
+  $lat     = get_field('geo_lat');
+  $lng     = get_field('geo_lng');
+?&gt;
+
+  &lt;div class="dt-hero"&gt;                           // 4 ← class จากดีไซน์ (สัญญา!)
+    &lt;h1 class="dt-title"&gt;&lt;?php the_title(); ?&gt;&lt;/h1&gt;  // 5
+
+    &lt;?php if ($hours): ?&gt;                         // 6
+      &lt;div class="val"&gt;&lt;?php echo esc_html($hours); ?&gt;&lt;/div&gt;  // 7
+    &lt;?php endif; ?&gt;
+
+    &lt;?php if ($lat &amp;&amp; $lng): ?&gt;                    // 8
+      &lt;a class="btn" href="https://maps.google.com/?q=&lt;?php
+         echo esc_attr($lat); ?&gt;,&lt;?php echo esc_attr($lng); ?&gt;"&gt;  // 9
+         ดูแผนที่&lt;/a&gt;
+    &lt;?php endif; ?&gt;
+  &lt;/div&gt;
+
+&lt;?php endwhile; ?&gt;
+&lt;?php get_footer(); ?&gt;                            // 10</code></pre>
+    <table>
+      <tr><th>บรรทัด</th><th>ทำไมต้องมี (ไม่ใช่แค่ทำอะไร)</th></tr>
+      <tr><td>1,10</td><td><code>get_header()</code>/<code>get_footer()</code> — ดึงหัว-ท้ายร่วม (รวม Unibar จาก Week 6) · ไม่ก๊อป markup header มาทุกหน้า (reuse)</td></tr>
+      <tr><td>2</td><td>The Loop (Week 6) — main query ของหน้า single มีโพสต์เดียว แต่ยังต้องวน loop เพื่อให้ template tag ทำงาน</td></tr>
+      <tr><td>3</td><td>ดึง ACF field ที่<strong>เพิ่มเองใน Week 4</strong> — เก็บตัวแปรบนสุด อ่านง่าย + reuse</td></tr>
+      <tr><td>4</td><td><strong>class <code>dt-hero</code> จากดีไซน์เดิม</strong> — ห้ามเปลี่ยน (สัญญากับ CSS · ส่วนที่ 2)</td></tr>
+      <tr><td>5</td><td><code>the_title()</code> ผ่าน qTranslate filter อัตโนมัติ (Week 5) — แสดงภาษาตาม URL</td></tr>
+      <tr><td>6-7</td><td>guard clause: มีค่าค่อยแสดง (Week 4) + <code>esc_html()</code> เสมอ</td></tr>
+      <tr><td>8-9</td><td><strong>จุดที่ dev-starter ยังละ escape ไว้ให้เติม!</strong> — <code>$lat</code>,<code>$lng</code> ต่อเข้า URL ต้อง <code>esc_attr()</code>/<code>esc_url()</code> · Mission จะหาจุดนี้แล้วเติม</td></tr>
+    </table>
+  </div>
+
+  <h2>ส่วนที่ 4: ⚠️ 2 เรื่องต้องจัดการก่อนแตะ theme จริง</h2>
+  <div class="card">
+    <h3>1. reCAPTCHA secret key hardcode ใน functions.php (Risk R4)</h3>
+    <p>ในธีมจริงมี reCAPTCHA v3 <strong>secret key เขียนตายในโค้ด</strong> (<code>functions.php</code>) · ถ้า push ขึ้น Git แบบนี้ = key รั่วสู่ทุกคนที่เห็น repo
+    · <strong>ต้องย้ายไป environment variable/<code>wp-config.php</code> constant ก่อน commit แรก</strong> (เช่น <code>getenv('RECAPTCHA_SECRET')</code>) — นี่คือ action item ที่ทำก่อนเริ่ม dev ไม่รอ Week 9</p>
+
+    <h3>2. ลบ <code>single-ss_whattosee.php</code> (ศพ template จาก Week 3)</h3>
+    <p>ยืนยันจาก CPT UI แล้วว่า CPT <code>ss_whattosee</code> ไม่มีอยู่ (ถูก rename เป็น <code>whattosee</code>) · ไฟล์ template เก่าค้างไว้ = <strong>ลบได้ปลอดภัย</strong>
+    (<code>single-ss_whattosee.php</code>, <code>templates/ss_whattosee.php</code>, branch <code>ss_whattosee</code> ใน <code>set_pagesize</code>) · แต่<strong>ยืนยันกับทีมก่อนเสมอ</strong> — การลบไฟล์คนอื่นต้องมั่นใจว่าไม่มีอะไรเรียกใช้</p>
+  </div>
+
+  <h2>ตัวอย่างประยุกต์</h2>
+  <div class="card">
+    <p><strong>🏢 งานวี:</strong> การเลือก (ก)/(ข) ต่อหน้าคือการตัดสินใจที่วีต้องคุยกับทีมในประชุมแรก (docs/08 §6 คำถามที่ 2) —
+    บทนี้ให้เกณฑ์ตัดสินใจที่อธิบายได้: หน้า GEO สำคัญ (single-whattosee, home, news) ใช้ (ก) เพื่อคุมดีไซน์+schema · หน้ารองใช้ (ข) ประหยัดแรง</p>
+    <p><strong>🌏 อุตสาหกรรม:</strong> "brownfield project" (แก้ระบบเก่าที่รันอยู่) คืองานส่วนใหญ่ของ dev ทั่วโลก — ต่างจาก "greenfield" (สร้างใหม่) ที่เจอน้อยกว่ามาก ·
+    ทักษะอ่าน legacy code + refactor อย่างปลอดภัย (ไม่พังของเดิม) คือสิ่งที่แยก junior ที่ "เขียนโค้ดใหม่ได้" ออกจาก senior ที่ "ดูแลระบบจริงได้"</p>
+  </div>
+
+  <h2>🧹 Clean Code ประจำ Week 7 — refactor อย่างปลอดภัย</h2>
+  <div class="card">
+    <h3>1. functions.php = สารบัญ ไม่ใช่โกดัง</h3>
+    <div class="clean">
+      <div class="bad"><h4>❌ ยัดทุก logic ใน functions.php</h4>
+<pre><code>// functions.php 1,500 บรรทัด
+// enqueue + CPT + ajax + schema
+// + reCAPTCHA (secret key ด้วย!)
+// ปนกันหมด — หาอะไรไม่เจอ</code></pre></div>
+      <div class="good"><h4>✅ require ไฟล์ inc/ ตามหน้าที่</h4>
+<pre><code>require 'inc/scripts.php';   // enqueue
+require 'inc/template-tags.php';
+require 'inc/ajax.php';
+// secret key → wp-config.php constant
+// แต่ละไฟล์ทำเรื่องเดียว</code></pre></div>
+    </div>
+
+    <h3>2. เก็บ class ดีไซน์ · เปลี่ยนหน้าตาที่ตัวแปร CSS</h3>
+    <div class="clean">
+      <div class="bad"><h4>❌ เปลี่ยนชื่อ class = ผิดสัญญา CSS</h4>
+<pre><code>&lt;!-- เดิม .dt-hero --&gt;
+&lt;div class="my-new-hero"&gt;
+// styles.css หา .dt-hero ไม่เจอ
+// → หน้าเพี้ยนทั้งบล็อก</code></pre></div>
+      <div class="good"><h4>✅ คง class · แก้สีที่ :root</h4>
+<pre><code>&lt;div class="dt-hero"&gt;  &lt;!-- คงเดิม --&gt;
+/* styles.css */
+:root { --wis: #15679f; }
+// เปลี่ยนธีมสีที่ตัวแปรที่เดียว</code></pre></div>
+    </div>
+    <div class="warn"><strong>กฎทอง:</strong> refactor ที่ดี = "พฤติกรรมเดิม โครงสร้างดีขึ้น" — ถ้าหน้าตา/การทำงานเปลี่ยนไปจากที่ควร แสดงว่าไม่ใช่ refactor แล้ว แต่เป็นการแก้ที่อาจพลาด ·
+    แก้ทีละน้อย ทดสอบบ่อย (โยง Week 6: ทดสอบด้วยตาทุกครั้ง)</div>
+  </div>
+
+  <h2>🎯 Mission 7 — <code>single-whattosee.php</code> เวอร์ชันจริง (แม่แบบทุกหน้า)</h2>
+  <div class="danger" style="margin-bottom:16px">
+    🤖 <strong>กฎ AI สองโหมด:</strong> ปิด AI เขียนมือ · ติดเกิน 20 นาทีขอ hint · ทำบน sandbox · <strong>ใช้ dev-starter เป็น reference แต่เขียนเอง</strong>
+  </div>
+  <div class="mission">
+    <h3>เป้าหมาย <span class="badge orange">~4-5 ชม.</span></h3>
+    <p>สร้าง template หน้ารายละเอียดสถานที่ที่รวมทุกอย่าง 6 สัปดาห์ที่ผ่านมา — เป็นแม่แบบที่หน้าอื่นทำตาม (Phase 1-2)</p>
+
+    <div class="step"><div class="num">1</div><div>
+      <strong>อ่านของเดิมก่อน</strong> — เปิด <code>dev-starter/single-whattosee.php</code> + <code>SpotDetail.html</code> เทียบกัน ·
+      ทำความเข้าใจว่า markup/class ไหนมาจากดีไซน์ (คงไว้) · จุดไหนแทนด้วย PHP</div></div>
+
+    <div class="step"><div class="num">2</div><div>
+      <strong>เขียน template เอง</strong> — bind ACF field ที่เพิ่มใน Week 4 (<code>summary_th</code>, <code>opening_hours</code>, <code>geo_lat/lng</code>, <code>faq</code> repeater)
+      · <code>the_title()</code>/<code>the_content()</code> ผ่าน qTranslate (Week 5) · guard clause ทุก field</div></div>
+
+    <div class="step"><div class="num">3</div><div>
+      <strong>🛡 หาจุดที่ dev-starter ละ escape แล้วเติมให้ครบ</strong> — โดยเฉพาะ <code>$lat</code>/<code>$lng</code> ใน URL แผนที่ (<code>esc_attr</code>/<code>esc_url</code>)
+      · escape ทุก output (Week 4) — ไม่มีข้อยกเว้น</div></div>
+
+    <div class="step"><div class="num">4</div><div>
+      <strong>รักษา class ดีไซน์ + ทดสอบ</strong> — เทียบกับ SpotDetail.html ว่าหน้าตาตรงไหม (class ต้องเป๊ะ) ·
+      แก้ข้อมูลใน admin → หน้าเปลี่ยน (พิสูจน์ dynamic) · สลับภาษา 2-3 ภาษาดู qTranslate ทำงาน</div></div>
+
+    <div class="step"><div class="num">5</div><div>
+      <strong>commit + push</strong> — repo generic <code>wp-single-template-lab</code> (markup/ข้อมูลสร้างเอง ไม่ใช่ของบริษัท) ·
+      README: อธิบายว่า reuse อะไรจากของเดิม / เขียนใหม่อะไร / จุด escape ที่เติม + AI Usage</div></div>
+  </div>
+
+  <div class="card">
+    <h3>✅ Definition of Done</h3>
+    <ul class="check">
+      <li>หน้า single แสดง field ครบ (summary/hours/geo/faq) จาก DB · แก้ admin แล้วเปลี่ยน (dynamic)</li>
+      <li>escape ครบทุก output — โดยเฉพาะ lat/lng ใน URL แผนที่ที่ dev-starter ละไว้</li>
+      <li>class ตรงดีไซน์ (หน้าตาเหมือน SpotDetail.html) · qTranslate สลับภาษาได้</li>
+      <li>README แยกชัด: reuse อะไร / เขียนใหม่อะไร / เติม escape ตรงไหน · Quiz ตอบได้</li>
+    </ul>
+  </div>
+
+  <h2>📝 Quiz — ทดสอบความเข้าใจ</h2>
+  <details><summary>ข้อ 1: เจอ theme เก่าที่ "โค้ดงง อยากเขียนใหม่หมด" — ทำไมมืออาชีพมักไม่ทำ?</summary>
+    <p>เพราะโค้ดเก่าเก็บความรู้ที่ไม่มีในเอกสาร: bug fixes, edge cases, business logic ที่สะสมมาหลายปี · เขียนใหม่ = ทิ้งของพวกนี้ + เสี่ยงพังของที่ทำงานอยู่ + ใช้เวลานานกว่าที่คิดเสมอ
+    · ทางที่ถูก: อ่านให้เข้าใจ → refactor เฉพาะจุด (รีโนเวท ไม่ทุบสร้างใหม่) · reuse ของที่ดีอยู่แล้ว (qTranslate, เวลาทำการ, เมนู)</p></details>
+  <details><summary>ข้อ 2: ทำไมห้ามเปลี่ยนชื่อ class ที่ styles.css อ้างถึง แล้วถ้าอยากปรับดีไซน์ต้องทำที่ไหน?</summary>
+    <p>class คือ "สัญญา" ระหว่าง HTML กับ CSS — เปลี่ยนชื่อ class ใน markup = CSS หากฎที่ตรงกับ class เดิมไม่เจอ = สไตล์หาย หน้าเพี้ยนทั้งบล็อก ·
+    อยากปรับดีไซน์ให้แก้ที่<strong>ตัวแปร <code>:root</code> ใน styles.css</strong> (เช่น <code>--wis</code> สีแบรนด์) — มีผลทั้งเว็บโดยไม่แตะ markup · หลักการโปรเจค: "ดีไซน์ = พิมพ์เขียว ใช้ styles.css เดิม"</p></details>
+  <details><summary>ข้อ 3 (security/production): reCAPTCHA secret key hardcode ใน functions.php — ทำไมอันตราย และแก้ยังไงก่อน commit แรก?</summary>
+    <p>secret key ในโค้ด = พอ push ขึ้น Git ทุกคนที่เห็น repo (รวม history) เห็น key → ใช้ปลอมเป็นเว็บเราเรียก reCAPTCHA API ได้ / ถ้า repo หลุด public = key รั่วถาวร (แม้ลบทีหลัง history ยังมี) ·
+    แก้: ย้ายไป <code>wp-config.php</code> constant หรือ env var (<code>getenv('RECAPTCHA_SECRET')</code>) ที่ไม่เข้า Git (อยู่ใน .gitignore) — ทำ<strong>ก่อน commit แรก</strong> เพราะ key ที่เคยเข้า history แล้วลบยาก (Risk R4)</p></details>
+  <details><summary>ข้อ 4: หน้าไหนของ Fujisawa ควรใช้ (ก) แทน markup / หน้าไหนใช้ (ข) retrofit? เพราะอะไร?</summary>
+    <p>(ก) แทน markup → หน้า GEO สำคัญ (หน้าแรก, single-whattosee, news) เพราะต้องคุมดีไซน์+schema ให้ตรงเป๊ะ (ธุรกิจแคร์ AI search) ·
+    (ข) retrofit → หน้ารองที่โครง Bootstrap เดิมใกล้ดีไซน์อยู่แล้ว (ประหยัดแรง เสี่ยงพังน้อย) · หลักคิด: เลือกเครื่องมือตามคุณค่าของงาน ไม่ใช่ใช้วิธีเดียวทั้งเว็บ</p></details>
+
+  <div class="card" style="border:2px solid var(--brand)">
+    <h3 style="margin-top:0">⏭ สัปดาห์หน้า</h3>
+    <p style="margin:0"><strong>Week 8 — GEO/AEO Schema: JSON-LD ฝั่ง Server ⭐ (Phase 3):</strong>
+    มีหน้า single แล้ว — คราวนี้ทำให้ AI search "อ่านออก" · JSON-LD <code>@graph</code>, binding schema↔ACF, ทำไมต้อง render ฝั่ง server (crawler ไม่รัน JS)
+    · Mission: เติม schema จนผ่าน Google Rich Results Test — เป้าธุรกิจอันดับ 1 ของ redesign</p>
+  </div>
+
+  <div class="nav-bottom">
+    <a class="btn ghost" href="../week-06/index.html">← Week 6</a>
+    <a class="btn ghost" href="../index.html">หน้ารวมคอร์ส</a>
+    <span class="btn" style="background:#9ca3af;cursor:default">Week 8 (รอสร้าง) →</span>
+  </div>
+  <footer>PHP Full Stack Track × Fujisawa V2.1 · Week 7 · มาตรฐานบทเรียน 7 ส่วน</footer>
+</div>
+</body>
+</html>

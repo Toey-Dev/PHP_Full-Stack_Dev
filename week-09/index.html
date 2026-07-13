@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 9 — Security + Deploy: ปิดแทร็ก</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="crumb"><a href="../index.html">PHP Full Stack Track</a> · Week 9 · สัปดาห์สุดท้าย</div>
+    <h1>🛡 Security + Deploy — ปิดแทร็ก</h1>
+    <p>สัปดาห์สุดท้าย รวมทุกอย่างเข้าด้วยกัน — security ครบวงจร (escape ที่ถักมาตั้งแต่ Week 4 + ขาเข้า) และวงจร deploy มืออาชีพ
+    · จุดนี้คือที่ที่<strong>จุดแข็ง pentest ของวีมาบรรจบกับโค้ด WP ที่เขียนเอง</strong> ผ่าน case study จริง 2 ชิ้น
+    — กลายเป็น "dev ที่ audit ระบบตัวเองได้" ซึ่งเป็นจุดขายใน portfolio</p>
+    <p style="margin-top:10px;font-size:.9rem;opacity:.85">⏱ เนื้อหา ~3 ชม. + Mission ~4 ชม. · 🎯 Mission (Phase 4): SECURITY.md audit checklist + .gitlab-ci.yml lint</p>
+  </div>
+</header>
+<div class="wrap">
+
+  <div class="card">
+    <h3 style="margin-top:0">🔑 คีย์เวิร์ดภาพจำ</h3>
+    <div class="kw-row">
+      <span class="kw">🚪 อย่าเชื่อ input (sanitize ขาเข้า)</span>
+      <span class="kw">🛡 escape ทุก output (ขาออก — Week 4)</span>
+      <span class="kw">🎫 nonce = ตั๋วกันปลอมคำขอ (CSRF)</span>
+      <span class="kw">☠️ uploads ต้องรัน PHP ไม่ได้ (webshell)</span>
+      <span class="kw">🔑 secret ไม่เข้า Git (env/wp-config)</span>
+      <span class="kw">🚀 deploy แตะแค่ theme = rollback ง่าย</span>
+    </div>
+  </div>
+
+  <h2>🧠 แนวคิด & หลักการ</h2>
+  <div class="card">
+    <h3>หลักการ 1: กฎ 2 ข้อที่สรุป security ฝั่ง dev ได้ 80%</h3>
+    <p>วีมาจากสาย pentest — เข้าใจว่า "ช่องโหว่มาจากไหน" อยู่แล้ว · บทนี้เชื่อมมุมนั้นเข้ากับ<em>โค้ดที่เขียนเอง</em> · สองกฎที่ครอบเกือบทุกช่องโหว่:</p>
+    <table>
+      <tr><th>กฎ</th><th>ความหมาย</th><th>ฟังก์ชัน WP</th></tr>
+      <tr><td>🚪 <strong>อย่าเชื่อ input</strong> (ขาเข้า)</td><td>ทุกอย่างที่มาจากผู้ใช้ (form, URL, API) อาจมีพิษ — ทำความสะอาดก่อนใช้</td><td><code>sanitize_text_field()</code>, <code>absint()</code>, <code>check_ajax_referer()</code></td></tr>
+      <tr><td>🛡 <strong>escape ทุก output</strong> (ขาออก)</td><td>ก่อนแสดงอะไรออกจอ แปลงให้ไร้พิษ (Week 4 ถักมาแล้ว)</td><td><code>esc_html()</code>, <code>esc_url()</code>, <code>esc_attr()</code></td></tr>
+    </table>
+    <p><strong>เปรียบเปรย:</strong> ขาเข้า = <em>ด่านตรวจคนเข้าอาคาร</em> (สแกนกระเป๋าก่อนเข้า) · ขาออก = <em>ด่านตรวจก่อนขึ้นเวที</em> (เช็คอีกทีก่อนออกสู่สาธารณะ) ·
+    ระบบที่ปลอดภัยมี<strong>ทั้งสองด่าน</strong> — เชื่อว่า input สะอาดแล้วเลยไม่ escape ตอน output = พลาด (เพราะ input อาจผ่านมาหลายทาง)</p>
+
+    <h3>หลักการ 2: Defense in depth — หลายชั้นดีกว่าชั้นเดียว</h3>
+    <p>ไม่มีด่านไหนกันได้ 100% — จึงวางหลายชั้น · ถ้าชั้นหนึ่งพลาด ยังมีชั้นถัดไป · เช่น ฟอร์ม AJAX: nonce (กัน CSRF) → sanitize (ล้าง input) → capability check (เช็คสิทธิ์) → escape (ตอนแสดงผลกลับ)</p>
+
+    <h3>หลักการ 3: security ไม่ใช่ "งานตอนท้าย" — ถักตลอดทาง</h3>
+    <p>โยงทั้งแทร็ก: เราไม่รอมาทำ security สัปดาห์สุดท้าย — escape ถักตั้งแต่ Week 4, nonce/sanitize จะใช้ทุกครั้งที่มี form, show_in_rest คิดตั้งแต่ Week 2 ·
+    บทนี้แค่<strong>รวบยอด + เพิ่มมุมที่ยังขาด (ขาเข้า/uploads/deploy) + ทำ audit checklist</strong> · หลักคิด: security เป็นนิสัย ไม่ใช่ขั้นตอน</p>
+  </div>
+
+  <figure class="figure">
+    <svg viewBox="0 0 760 220" xmlns="http://www.w3.org/2000/svg" font-family="Sarabun,sans-serif" role="img" aria-label="Defense in depth หลายชั้น">
+      <defs><marker id="e1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#6b7280"/></marker></defs>
+      <rect x="15" y="80" width="120" height="60" rx="8" fill="#e4eff5" stroke="#15679f" stroke-width="2"/>
+      <text x="75" y="105" text-anchor="middle" font-size="12" font-weight="bold" fill="#0c3f5e">👤 ผู้ใช้</text>
+      <text x="75" y="125" text-anchor="middle" font-size="10" fill="#6b7280">(อาจไม่หวังดี)</text>
+      <rect x="170" y="75" width="115" height="70" rx="8" fill="#fff" stroke="#d97706" stroke-width="2"/>
+      <text x="227" y="98" text-anchor="middle" font-size="11" font-weight="bold" fill="#92400e">🎫 nonce</text>
+      <text x="227" y="117" text-anchor="middle" font-size="9.5" fill="#1f2937">check_ajax_referer</text>
+      <text x="227" y="133" text-anchor="middle" font-size="9" fill="#6b7280">กัน CSRF</text>
+      <rect x="320" y="75" width="115" height="70" rx="8" fill="#fff" stroke="#d97706" stroke-width="2"/>
+      <text x="377" y="98" text-anchor="middle" font-size="11" font-weight="bold" fill="#92400e">🚪 sanitize</text>
+      <text x="377" y="117" text-anchor="middle" font-size="9.5" fill="#1f2937">sanitize_text_field</text>
+      <text x="377" y="133" text-anchor="middle" font-size="9" fill="#6b7280">ล้าง input</text>
+      <rect x="470" y="75" width="115" height="70" rx="8" fill="#fff" stroke="#d97706" stroke-width="2"/>
+      <text x="527" y="98" text-anchor="middle" font-size="11" font-weight="bold" fill="#92400e">🔑 capability</text>
+      <text x="527" y="117" text-anchor="middle" font-size="9.5" fill="#1f2937">current_user_can</text>
+      <text x="527" y="133" text-anchor="middle" font-size="9" fill="#6b7280">เช็คสิทธิ์</text>
+      <rect x="620" y="75" width="120" height="70" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+      <text x="680" y="98" text-anchor="middle" font-size="11" font-weight="bold" fill="#dc2626">🛡 escape</text>
+      <text x="680" y="117" text-anchor="middle" font-size="9.5" fill="#1f2937">esc_html</text>
+      <text x="680" y="133" text-anchor="middle" font-size="9" fill="#6b7280">ตอนแสดงกลับ</text>
+      <line x1="135" y1="110" x2="167" y2="110" stroke="#6b7280" stroke-width="2" marker-end="url(#e1)"/>
+      <line x1="285" y1="110" x2="317" y2="110" stroke="#6b7280" stroke-width="2" marker-end="url(#e1)"/>
+      <line x1="435" y1="110" x2="467" y2="110" stroke="#6b7280" stroke-width="2" marker-end="url(#e1)"/>
+      <line x1="585" y1="110" x2="617" y2="110" stroke="#6b7280" stroke-width="2" marker-end="url(#e1)"/>
+      <text x="380" y="185" text-anchor="middle" font-size="12.5" fill="#1f2937">Defense in depth — 4 ด่านซ้อนกัน · ด่านหนึ่งพลาด ยังมีด่านถัดไป</text>
+    </svg>
+    <figcaption>ภาพที่ 1: หลายชั้นป้องกัน (ฟอร์ม AJAX) — nonce → sanitize → capability → escape · ปลอดภัยกว่าพึ่งด่านเดียว</figcaption>
+  </figure>
+
+  <h2>ส่วนที่ 1: ขาเข้า — sanitize + nonce (เก็บที่ยังขาด)</h2>
+  <div class="card">
+    <p>Week 4 ทำ escape ขาออกไปแล้ว · คราวนี้เก็บ<strong>ขาเข้า</strong> — สำคัญเมื่อมีฟอร์ม/AJAX (เช่น filter สถานที่, ฟอร์มติดต่อ):</p>
+<pre><code>add_action('wp_ajax_filter_spots', 'df_filter_spots');       // 1
+add_action('wp_ajax_nopriv_filter_spots', 'df_filter_spots');
+function df_filter_spots() {
+  check_ajax_referer('spot_filter', 'nonce');                // 2
+  $area  = sanitize_text_field($_POST['area'] ?? '');        // 3
+  $page  = absint($_POST['page'] ?? 1);                      // 4
+  $q = new WP_Query([
+    'post_type' =&gt; 'whattosee',
+    'paged'     =&gt; $page,
+    'tax_query' =&gt; [['taxonomy'=&gt;'spot_cat','terms'=&gt;$area,'field'=&gt;'slug']], // 5
+  ]);
+  // ...loop + echo esc_html(...)...                          // 6
+  wp_die();                                                   // 7
+}</code></pre>
+    <table>
+      <tr><th>บรรทัด</th><th>ทำไมต้องมี (ไม่ใช่แค่ทำอะไร)</th></tr>
+      <tr><td>1</td><td>2 hook: <code>wp_ajax_</code> (คน login) + <code>wp_ajax_nopriv_</code> (คนทั่วไป) — เว็บ public ต้องมีตัวหลัง ไม่งั้น AJAX ใช้ได้แค่คน login</td></tr>
+      <tr><td>2</td><td><strong>🎫 nonce ก่อนทำอะไรทั้งสิ้น</strong> — <code>check_ajax_referer()</code> เช็ค "ตั๋ว" ที่แนบมา · กัน CSRF (เว็บอื่นหลอกส่งคำขอในนามผู้ใช้) · ผิด/ไม่มีตั๋ว = หยุดทันที</td></tr>
+      <tr><td>3</td><td><code>sanitize_text_field()</code> ล้าง <code>$_POST['area']</code> — ตัด HTML/ช่องว่างเกิน/บรรทัดใหม่ · <code>?? ''</code> กัน undefined index (PHP 8)</td></tr>
+      <tr><td>4</td><td><code>absint()</code> บังคับเป็นจำนวนเต็มบวก — เลขหน้าต้องเป็นตัวเลข ไม่ใช่ <code>"1; DROP TABLE"</code> · แปลง type = กันพิษไปในตัว</td></tr>
+      <tr><td>5</td><td>ใช้ค่าที่ sanitize แล้วใน tax_query · WP_Query เตรียม SQL แบบ prepared ให้ = กัน SQL injection อีกชั้น (ไม่ต้องต่อ SQL เอง)</td></tr>
+      <tr><td>6</td><td>ขาออกยัง escape เสมอ (Week 4) — input ผ่าน sanitize แล้วก็ยัง escape ตอน echo (defense in depth)</td></tr>
+      <tr><td>7</td><td><code>wp_die()</code> ปิดท้าย AJAX handler — ไม่งั้น WP ต่อ output "0" มาท้าย response</td></tr>
+    </table>
+    <div class="tip"><strong>เปรียบเปรย nonce:</strong> = ตั๋วคอนเสิร์ตที่มีเลขกำกับ + หมดอายุ · เว็บอื่นหลอกให้ผู้ใช้กดส่งฟอร์มได้ แต่ไม่มีตั๋วที่ถูกต้อง = เข้าไม่ได้ ·
+    ต่างจากรหัสผ่าน (nonce ใช้ครั้งเดียว/ช่วงเวลาสั้น) — กันการ"ปลอมคำขอ" โดยเฉพาะ</div>
+  </div>
+
+  <h2>ส่วนที่ 2: 🕵️ Case Study จริง #1 — Webshell ใน uploads</h2>
+  <div class="card">
+    <p>พบไฟล์ลักษณะ webshell 2 ไฟล์ใน backup uploads ของ discover-fujisawa (<code>uploads/2019/n99bq6bc.php</code>, <code>uploads/2021/leca126n.php</code> — โค้ด obfuscated) ·
+    นี่คือจุดที่มุม pentest ของวีวิเคราะห์ได้ลึกกว่า dev ทั่วไป:</p>
+    <table>
+      <tr><th>คำถามสืบสวน</th><th>วิเคราะห์</th></tr>
+      <tr><td>webshell คืออะไร</td><td>ไฟล์ PHP ที่แฮกเกอร์อัปโหลดเข้าเซิร์ฟเวอร์ = "ประตูหลัง" ให้รันคำสั่งบนเครื่องได้จากระยะไกล (อ่านไฟล์, แก้ DB, ส่ง spam)</td></tr>
+      <tr><td>เข้ามาทางไหน</td><td>ช่องอัปโหลดที่ไม่ validate ชนิดไฟล์ (เผลอรับ .php), ปลั๊กอิน/theme เก่ามีช่องโหว่, หรือบัญชี admin ถูกเดารหัส</td></tr>
+      <tr><td><strong>ทำไม PHP ใน uploads ถึงรันได้</strong></td><td>โฟลเดอร์ <code>uploads/</code> ควรเก็บแค่รูป/PDF — แต่ถ้า server ตั้งค่าให้รัน .php ทุกที่ ไฟล์ที่หลุดเข้าไปก็รันได้ · <strong>นี่คือช่องที่ปิดได้ที่ระดับ server</strong></td></tr>
+    </table>
+    <div class="danger"><strong>🔒 วิธีปิด (ระดับ Apache/nginx) — สำคัญที่สุด:</strong> บล็อกการรัน PHP ในโฟลเดอร์ uploads ทั้งหมด · แม้แฮกเกอร์อัปโหลด webshell เข้าไปได้ ก็รันไม่ได้ (กลายเป็นไฟล์ข้อความเฉยๆ)
+    <pre style="margin:8px 0"><code># .htaccess ใน wp-content/uploads/ (Apache)
+&lt;FilesMatch "\.php$"&gt;
+  Require all denied
+&lt;/FilesMatch&gt;</code></pre>
+    <strong>+ action item จริง (README ระบุ):</strong> ต้องตรวจ server จริง + แจ้งทีมก่อน restore uploads ใดๆ — เรื่องนี้ไม่รอหลักสูตร</div>
+    <p><strong>หลักคิด:</strong> "assume breach" (สมมุติว่าถูกเจาะได้) — ไม่พึ่งแค่กันไม่ให้อัปโหลด (ด่านเดียว) แต่วางด่านที่ 2: ต่อให้อัปโหลดได้ก็รันไม่ได้ · defense in depth ในโลกจริง</p>
+  </div>
+
+  <h2>ส่วนที่ 3: 🔑 Case Study จริง #2 — Secret hardcode (Risk R4)</h2>
+  <div class="card">
+    <p>ในธีมจริงมี reCAPTCHA v3 <strong>secret key เขียนตายใน <code>functions.php</code></strong> (Week 7 เตือนไว้) — วิเคราะห์เชิง security:</p>
+    <table>
+      <tr><th>ประเด็น</th><th>ทำไมอันตราย</th></tr>
+      <tr><td>key อยู่ในโค้ด</td><td>ทุกคนที่เห็น repo (รวม Git history) เห็น key · แม้ commit ลบทีหลัง — history ยังเก็บไว้ถาวร (ต้อง rewrite history + revoke key)</td></tr>
+      <tr><td>ถ้า repo หลุด public</td><td>key รั่วถาวร — แฮกเกอร์ปลอมเป็นเว็บเราเรียก API, หรือทำ reCAPTCHA ของเราใช้ไม่ได้</td></tr>
+      <tr><td>ตรวจเจอยังไง</td><td>เครื่องมือ secret scanner (gitleaks, GitHub secret scanning) จับ pattern ของ key อัตโนมัติ — บางทีแฮกเกอร์สแกน repo หา key เร็วกว่าเรารู้ตัว</td></tr>
+    </table>
+    <div class="tip"><strong>วิธีแก้ (ทำก่อน commit แรก):</strong> ย้าย key ไป <code>wp-config.php</code> constant หรือ environment variable ที่อยู่ใน <code>.gitignore</code>:
+    <pre style="margin:8px 0"><code>// wp-config.php (ไม่เข้า Git)
+define('RECAPTCHA_SECRET', 'xxx');
+// functions.php
+$secret = defined('RECAPTCHA_SECRET') ? RECAPTCHA_SECRET : getenv('RECAPTCHA_SECRET');</code></pre></div>
+  </div>
+
+  <h2>ส่วนที่ 4: 🚀 วงจร Deploy มืออาชีพ (docs/08)</h2>
+  <div class="card">
+    <p><strong>เปรียบเปรย:</strong> deploy เว็บ production ที่มีเนื้อหาจริง = <em>ผ่าตัดคนไข้ที่ยังตื่นอยู่</em> · ต้องแม่นยำ ย้อนกลับได้ ไม่แตะอวัยวะที่ไม่เกี่ยว · หลักเหล็ก: <strong>deploy = sync เฉพาะ <code>themes/fujisawa/</code> ไม่แตะ DB/uploads/plugins</strong></p>
+    <table>
+      <tr><th>ขั้น</th><th>ทำอะไร · ทำไม</th></tr>
+      <tr><td>1. MR + review</td><td>1 template = 1 branch = 1 MR — เล็ก review ง่าย ย้อนง่าย · ทีมเห็น diff ก่อน merge</td></tr>
+      <tr><td>2. CI lint</td><td><code>php -l</code> (syntax) + <code>phpcs</code> (WordPress Coding Standards) — จับ error ก่อนขึ้น prod</td></tr>
+      <tr><td>3. rsync เฉพาะ theme</td><td><code>rsync --delete themes/fujisawa/</code> — sync แค่โฟลเดอร์ theme · <code>--exclude</code> scss/node_modules · <strong>ไม่แตะ DB/uploads</strong></td></tr>
+      <tr><td>4. post-deploy</td><td>flush permalink (ถ้ามี slug ใหม่) · ล้าง cache · ping Search Console · smoke test</td></tr>
+      <tr><td>5. rollback</td><td><code>git revert</code> + deploy ซ้ำ — <strong>DB ไม่กระทบเพราะไม่เคยแตะ</strong> = ปลอดภัย</td></tr>
+    </table>
+    <div class="warn"><strong>ทำไม "แตะแค่ theme" สำคัญ:</strong> production มีเนื้อหา 2,000+ ชิ้น + uploads + DB จริง · ถ้า deploy เผลอ sync ทับ DB/uploads = ข้อมูลลูกค้าเสียหายกู้ยาก ·
+    จำกัดขอบเขตให้แตะแค่ "โค้ด theme" ทำให้ทุก deploy ปลอดภัย + rollback ง่าย (revert แล้ว deploy ใหม่ ข้อมูลไม่กระทบ)</div>
+  </div>
+
+  <h2>ตัวอย่างประยุกต์</h2>
+  <div class="card">
+    <p><strong>🏢 งานวี:</strong> จุดขายใน portfolio ของวีคือ <strong>"dev ที่ audit ระบบตัวเองได้"</strong> — น้อยคนที่ทั้งเขียน WP ได้และมองเห็นช่องโหว่แบบ pentester ·
+    การวิเคราะห์ webshell + secret ในเว็บจริงที่ดูแลเอง แล้วเขียน SECURITY.md แก้ = หลักฐานทักษะที่หายากในตลาด</p>
+    <p><strong>🌏 อุตสาหกรรม:</strong> ทั้ง 2 กรณีอยู่ใน OWASP Top 10: webshell = A03 Injection/unrestricted upload · secret hardcode = A07 (identification/auth failures) + secret management ·
+    ทุกบริษัทที่ทำ DevSecOps มี secret scanning + upload restriction ใน pipeline · Samy worm, การเจาะผ่าน uploads เป็นเคสคลาสสิกที่สอนกันในทุกคอร์ส security</p>
+  </div>
+
+  <h2>🧹 Clean Code ประจำ Week 9 — เขียนโค้ดที่ปลอดภัยเป็นค่าเริ่มต้น</h2>
+  <div class="card">
+    <h3>1. nonce + sanitize ทุก handler (ไม่มีข้อยกเว้น)</h3>
+    <div class="clean">
+      <div class="bad"><h4>❌ ใช้ $_POST ตรงๆ — ช่องโหว่</h4>
+<pre><code>function df_filter() {
+  $area = $_POST['area'];   // ดิบ!
+  $q = new WP_Query([...$area...]);
+  // ไม่มี nonce · ไม่ sanitize
+}</code></pre></div>
+      <div class="good"><h4>✅ ตั๋ว + ล้าง ก่อนใช้เสมอ</h4>
+<pre><code>function df_filter() {
+  check_ajax_referer('spot_filter','nonce');
+  $area = sanitize_text_field(
+            $_POST['area'] ?? '');
+  // ปลอดภัยแล้วค่อยใช้
+}</code></pre></div>
+    </div>
+
+    <h3>2. secret ผ่าน constant/env — ไม่เขียนในโค้ด</h3>
+    <div class="clean">
+      <div class="bad"><h4>❌ key ในโค้ด = รั่วเข้า Git</h4>
+<pre><code>$secret = '6Lc9x...ตัวจริง...';
+// push = ทุกคนเห็น + history ถาวร</code></pre></div>
+      <div class="good"><h4>✅ อ่านจากที่ไม่เข้า Git</h4>
+<pre><code>$secret = getenv('RECAPTCHA_SECRET');
+// หรือ wp-config constant
+// อยู่ใน .gitignore</code></pre></div>
+    </div>
+    <div class="warn"><strong>กฎทอง:</strong> "secure by default" — เขียนแบบปลอดภัยตั้งแต่แรกจนเป็นนิสัย ไม่ใช่ "ค่อยมา harden ทีหลัง" ·
+    เพราะช่องโหว่ที่เผลอเขียนไว้ มักถูกลืมจนแฮกเกอร์เจอก่อน (โยงทั้งแทร็ก: escape ตั้งแต่ W4, nonce ทุก form, secret นอกโค้ด)</div>
+  </div>
+
+  <h2>🎯 Mission 9 — SECURITY.md + CI lint (ปิดแทร็ก · Phase 4)</h2>
+  <div class="danger" style="margin-bottom:16px">
+    🤖 <strong>กฎ AI สองโหมด:</strong> ปิด AI เขียนมือ · ติดเกิน 20 นาทีขอ hint · ชิ้นนี้คือจุดขาย portfolio "dev ที่ audit ได้"
+  </div>
+  <div class="mission">
+    <h3>เป้าหมาย <span class="badge orange">~4 ชม.</span></h3>
+    <p>รวมทุกความรู้ security ทั้งแทร็กเป็น audit checklist ที่ใช้จริงได้ + ตั้ง CI lint จริง — ปิดแทร็กด้วยผลงานที่โชว์ทักษะหายาก</p>
+
+    <div class="step"><div class="num">1</div><div>
+      <strong>เขียน <code>SECURITY.md</code> — audit checklist เว็บ WP ครบวงจร</strong> 5 หมวด:
+      ① Output escaping (esc_* ทุกจุด) ② Input (sanitize + nonce + capability) ③ Uploads (block PHP execution) ④ Secrets (ไม่เข้า Git) ⑤ Deploy (แตะแค่ theme)
+      · แต่ละข้อมี "ตรวจยังไง" + "แก้ยังไง"</div></div>
+
+    <div class="step"><div class="num">2</div><div>
+      <strong>เพิ่ม AJAX filter ครบ security</strong> ใน sandbox — filter สถานที่ตาม taxonomy: nonce + sanitize + escape ครบ (รวมทุก Week)
+      · ทดสอบ: ส่ง request ไม่มี nonce → ถูกปฏิเสธ</div></div>
+
+    <div class="step"><div class="num">3</div><div>
+      <strong>ตั้ง <code>.gitlab-ci.yml</code> lint จริง</strong> บน repo — stage lint รัน <code>php -l</code> ทุกไฟล์ .php ·
+      ลอง push ไฟล์ที่มี syntax error ดู CI จับได้ (แดง) แล้วแก้ให้เขียว</div></div>
+
+    <div class="step"><div class="num">4</div><div>
+      <strong>วิเคราะห์ case study 1 ชิ้น</strong> — เลือก webshell หรือ secret เขียนใน SECURITY.md: ช่องโหว่คืออะไร, เข้าได้ยังไง, ปิดยังไง (พร้อมโค้ด .htaccess/config)</div></div>
+
+    <div class="step"><div class="num">5</div><div>
+      <strong>push GitHub (repo ปิดแทร็ก)</strong> — <code>wp-security-audit-checklist</code> · README + SECURITY.md + .gitlab-ci.yml + AI Usage
+      · <strong>นี่คือ repo ที่โชว์ในใบสมัคร</strong> — เขียนให้ภูมิใจ</div></div>
+  </div>
+
+  <div class="card">
+    <h3>✅ Definition of Done</h3>
+    <ul class="check">
+      <li>SECURITY.md ครบ 5 หมวด · แต่ละข้อมี "ตรวจยังไง + แก้ยังไง" · มี case study จริง 1 ชิ้นวิเคราะห์ลึก</li>
+      <li>AJAX filter: nonce + sanitize + escape ครบ · ส่ง request ไม่มี nonce ถูกปฏิเสธจริง</li>
+      <li>.gitlab-ci.yml lint ทำงาน: push syntax error → CI แดง / แก้แล้ว → เขียว</li>
+      <li>README อ่านแล้วเข้าใจคุณค่า (dev ที่ audit ได้) · Quiz ตอบได้ · <strong>ปิดแทร็กครบ 9 สัปดาห์!</strong> 🎓</li>
+    </ul>
+  </div>
+
+  <h2>📝 Quiz — ทดสอบความเข้าใจ (ข้อสุดท้ายของแทร็ก)</h2>
+  <details><summary>ข้อ 1: ต่างระหว่าง sanitize (ขาเข้า) กับ escape (ขาออก) — ทำไมต้องมีทั้งคู่ ไม่พึ่งอันเดียว?</summary>
+    <p>sanitize = ล้าง input ตอนรับเข้า (ตัดสิ่งไม่ต้องการก่อนเก็บ/ใช้) · escape = แปลงให้ปลอดภัยตอนแสดงออกจอ (ตามบริบท html/url/attr) ·
+    ต้องมีทั้งคู่เพราะ: ① input อาจเข้ามาหลายทาง (บางทางไม่ผ่าน sanitize) ② ข้อมูลใน DB อาจมาจากยุคก่อนที่ยังไม่ sanitize ③ defense in depth — ด่านหนึ่งพลาดยังมีอีกด่าน · escape ตอน output คือด่านสุดท้ายที่ขาดไม่ได้</p></details>
+  <details><summary>ข้อ 2: nonce กัน CSRF ยังไง? ต่างจากรหัสผ่านตรงไหน?</summary>
+    <p>nonce = โทเคนสุ่มที่ผูกกับ action + ผู้ใช้ + ช่วงเวลา · เว็บอื่นที่พยายามหลอกให้ผู้ใช้ส่งคำขอ (CSRF) ไม่มี nonce ที่ถูกต้อง = ถูกปฏิเสธ ·
+    ต่างจากรหัสผ่าน: รหัสผ่านพิสูจน์ "คุณเป็นใคร" (ใช้ซ้ำได้นาน) · nonce พิสูจน์ "คำขอนี้มาจากฟอร์มจริงของเรา ไม่ใช่เว็บปลอม" (ใช้ครั้งเดียว/สั้น) — คนละหน้าที่</p></details>
+  <details><summary>ข้อ 3 (security/production): ทำไม "block PHP execution ใน uploads" สำคัญกว่าแค่ validate ตอนอัปโหลด?</summary>
+    <p>validate ตอนอัปโหลดคือด่านเดียว — ถ้าพลาด (ช่องโหว่ในปลั๊กอิน, bypass การเช็คชนิดไฟล์) webshell หลุดเข้าไปได้ · แต่ถ้า server บล็อกการรัน .php ใน uploads ไว้ด้วย (ด่าน 2)
+    ต่อให้ webshell หลุดเข้าไป ก็เป็นแค่ไฟล์ข้อความรันไม่ได้ = ไร้พิษ · หลัก "assume breach + defense in depth": สมมุติด่านแรกพลาดเสมอ แล้ววางด่านรับ · นี่คือเคสจริงจาก backup ของ discover-fujisawa</p></details>
+  <details><summary>ข้อ 4: ทำไม deploy production ควรแตะแค่ themes/fujisawa/ ไม่แตะ DB/uploads? เชื่อมกับ rollback ยังไง?</summary>
+    <p>production มีเนื้อหา/uploads/DB จริงที่ทีมคอนเทนต์ดูแล — ถ้า deploy ทับของพวกนี้ = ข้อมูลลูกค้าเสียหาย กู้ยาก · จำกัดให้แตะแค่ "โค้ด theme" ทำให้:
+    ① deploy ปลอดภัย (ไม่มีทางแตะข้อมูล) ② <strong>rollback ง่าย</strong> — ถ้า theme ใหม่พัง แค่ <code>git revert</code> + deploy ซ้ำ DB ไม่เคยถูกแตะจึงไม่กระทบเลย · หลัก: จำกัด blast radius ของทุกการเปลี่ยนแปลง</p></details>
+
+  <div class="card" style="border:2px solid var(--brand);background:#e9f2f8">
+    <h3 style="margin-top:0">🎓 จบแทร็กแล้ว! สรุปสิ่งที่ได้</h3>
+    <p style="margin:0 0 10px">9 สัปดาห์จาก "ใช้ WP เป็นแต่ไม่เข้าใจ" → <strong>"เข้าใจ WP ลึกพอทำ redesign Fujisawa ได้อย่างมั่นใจ"</strong>:</p>
+    <ul style="margin:0">
+      <li><strong>เข้าใจระบบ:</strong> mental model · stack ปลั๊กอิน · data model 18 CPT · ACF · 8 ภาษา · WP_Query</li>
+      <li><strong>ทำงานจริง:</strong> refactor theme เก่า · single-whattosee แม่แบบ · Unibar · JSON-LD schema · security audit</li>
+      <li><strong>Portfolio (GitHub public generic):</strong> wp-hooks-lab · wp-qtranslate-lang-sync · wp-jsonld-schema-kit · wp-security-audit-checklist</li>
+      <li><strong>งานจริง (GitLab):</strong> ความคืบหน้า redesign Phase 0-3 + fix lang_label</li>
+    </ul>
+    <p style="margin:12px 0 0"><strong>⚠️ อย่าลืม action items ที่ไม่รอหลักสูตร:</strong> แจ้งทีมเรื่อง webshell · ย้าย reCAPTCHA secret · เคลียร์ 3 คำถามกับทีม (whattosee vs sstr_spot / แนวทาง ก-ข / สถานะ ja)</p>
+  </div>
+
+  <div class="nav-bottom">
+    <a class="btn ghost" href="../week-08/index.html">← Week 8</a>
+    <a class="btn" href="../index.html">🎓 กลับหน้ารวมคอร์ส</a>
+  </div>
+  <footer>PHP Full Stack Track × Fujisawa V2.1 · Week 9 (สัปดาห์สุดท้าย) · มาตรฐานบทเรียน 7 ส่วน</footer>
+</div>
+</body>
+</html>

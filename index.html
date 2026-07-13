@@ -39,7 +39,10 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;margin-top:60px}
 <div class="wrap">
 
   <div class="card">
-    <strong>วิธีเรียน:</strong> แต่ละสัปดาห์อ่านบทเรียน (concept ก่อน syntax + why ทีละบรรทัด) → ทำ Mission ด้วยตัวเอง
+    <strong>เป้าใหญ่ของแทร็ก:</strong> ทำเว็บ Fujisawa ให้เป็น <strong>dynamic</strong> — ข้อมูลเชื่อมกันในฐานข้อมูล
+    ดึงมาแสดงบนหน้าเว็บ และทีมคอนเทนต์เพิ่ม/แก้เองได้จาก wp-admin
+    (<em>"ดีไซน์ = โครง markup · ฐานข้อมูล = แหล่งความจริง · เนื้อหาแก้ผ่าน wp-admin"</em>)
+    <br><strong>วิธีเรียน:</strong> แต่ละสัปดาห์อ่านบทเรียน (เปรียบเปรยก่อนเทคนิค + อธิบายโค้ดทีละบรรทัด) → ทำ Mission ด้วยตัวเอง
     (<strong>ปิด AI เขียนมือ</strong> · ติดเกิน 20 นาทีค่อยขอ hint) → ตอบ Quiz ท้ายบท
     · Mission ทุกอันคือ <strong>milestone จริงของงาน redesign Fujisawa</strong> (Phase 0-4) ทำใน sandbox เท่านั้น — ห้ามแตะเว็บจริง/DB จริง
   </div>
@@ -49,29 +52,29 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;margin-top:60px}
   <div class="card">
     <a class="week" href="week-01/index.html">Week 1 — WP คิดยังไง: The WordPress Mental Model</a>
     <span class="badge">พร้อมเรียน</span>
-    <p class="muted" style="margin:6px 0 0">3 เสาหลัก: ทุกอย่างคือ wp_posts · hook = ปลั๊กไฟ · template hierarchy + twist ของจริง (Page Template) · เนื้อหา ~2-3 ชม. + Mission ~3-4 ชม.</p>
-    <span class="mission">🎯 Mission = Phase 0: setup sandbox ตรง production + repo wp-hooks-lab</span>
+    <p class="muted" style="margin:6px 0 0">เว็บ dynamic = แยกข้อมูลออกจากหน้าตา (ป้ายไฟ LED) · 3 เสาหลัก: wp_posts (ตู้เอกสารตู้เดียว) / hook (ปลั๊กไฟ) / template hierarchy (บันได + ทางลัด Page Template) · The Loop ชิมลาง · อธิบายโค้ดทีละบรรทัด + Clean Code · เนื้อหา ~2-3 ชม. + Mission ~3-4 ชม.</p>
+    <span class="mission">🎯 Mission = Phase 0: setup sandbox ตรง production + repo wp-hooks-lab + พิสูจน์ความ dynamic</span>
   </div>
 
-  <div class="card disabled">
-    <span class="week-off">Week 2 — แกะ Stack 12 ปลั๊กอิน (Plugin ไม่ใช่กล่องดำ)</span>
-    <span class="badge soon">สร้างหลังจบ W1</span>
-    <p class="muted" style="margin:6px 0 0">CPT UI / ACF / qTranslate-XT / AIOSEO ทำอะไรเบื้องหลัง · อ่าน functions-discover-fujisawa.php ทีละบรรทัด</p>
-    <span class="mission">🎯 import ACF export จริง + register CPT ด้วยโค้ดล้วน</span>
+  <div class="card">
+    <a class="week" href="week-02/index.html">Week 2 — แกะ Stack ปลั๊กอิน (Plugin ไม่ใช่กล่องดำ)</a>
+    <span class="badge">พร้อมเรียน</span>
+    <p class="muted" style="margin:6px 0 0">ปลั๊กอิน = โค้ด + UI (เครื่องกาแฟแคปซูล) · CPT UI / ACF / qTranslate / AIOSEO เสียบ hook อะไร · อ่าน functions-discover-fujisawa.php ทีละฟังก์ชัน · plugin vs theme</p>
+    <span class="mission">🎯 register CPT ด้วยโค้ดล้วน + import ACF จริง 24 groups</span>
   </div>
 
-  <div class="card disabled">
-    <span class="week-off">Week 3 — Data Model จริง: 18 CPT + 8 Taxonomy ⭐</span>
-    <span class="badge soon">รอสร้าง</span>
-    <p class="muted" style="margin:6px 0 0">ระบบ prefix + flag · ปริศนา whattosee vs sstr_spot · has_archive:false 14 ตัว · can_export:false</p>
+  <div class="card">
+    <a class="week" href="week-03/index.html">Week 3 — Data Model จริง: 18 CPT + 8 Taxonomy ⭐</a>
+    <span class="badge">พร้อมเรียน</span>
+    <p class="muted" style="margin:6px 0 0">ต้นไม้ตัดสิน CPT/Taxonomy/Field · ระบบ prefix + flag · ปริศนา whattosee vs sstr_spot · has_archive:false 14 ตัว · can_export:false</p>
     <span class="mission">🎯 DESIGN-ANALYSIS.md + ลิสต์คำถามทีม (ใช้ประชุมจริงได้)</span>
   </div>
 
-  <div class="card disabled">
-    <span class="week-off">Week 4 — ACF ลึก: 24 Field Groups ⭐</span>
-    <span class="badge soon">รอสร้าง</span>
-    <p class="muted" style="margin:6px 0 0">qtranslate_* field types · acf-json · field GEO ที่ต้องเพิ่ม · 🔐 เริ่มถัก escape ทุก output</p>
-    <span class="mission">🎯 เพิ่ม summary_th / faq / geo_lat-lng บน sandbox + commit acf-json</span>
+  <div class="card">
+    <a class="week" href="week-04/index.html">Week 4 — ACF ลึก: 24 Field Groups ⭐</a>
+    <span class="badge">พร้อมเรียน</span>
+    <p class="muted" style="margin:6px 0 0">ACF = สะพาน admin→template · qtranslate_* 8 ภาษา · acf-json เข้า git · 🔐 เริ่มถัก escape ทุก output (counter-example Stored XSS)</p>
+    <span class="mission">🎯 เพิ่ม field GEO + commit acf-json + แสดง 3 field types escape ครบ</span>
   </div>
 
   <div class="card disabled">
@@ -128,7 +131,7 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;margin-top:60px}
 
   <h2>📐 เอกสารประกอบ</h2>
   <div class="card">
-    <p style="margin:0 0 8px"><strong>ในแทร็กนี้:</strong> <code>ROADMAP.md</code> (แผน 9 สัปดาห์ v2) · <code>README.md</code> (กติกา + action items)</p>
+    <p style="margin:0 0 8px"><strong>ในแทร็กนี้:</strong> <code>ROADMAP.md</code> (แผน 9 สัปดาห์ v2 + มาตรฐานรูปแบบบทเรียน) · <code>README.md</code> (กติกา + action items) · <code>course/style.css</code> (สไตล์กลางทุกบทเรียน — ธีมสว่าง responsive)</p>
     <p style="margin:0 0 8px"><strong>มาตรฐานจากแทร็กหลัก</strong> (<code>D:\Claude Cowork\Full Stack Dev\course\</code>): <code>lesson-standards.md</code> (โครงบทเรียน 7 ส่วน) · <code>portfolio-standard.md</code> · <code>ai-workflow.md</code> · <code>friday-rebuild.md</code> · <code>SPACED-REVIEW.md</code></p>
     <p style="margin:0"><strong>แหล่งความจริงโปรเจค</strong> (read-only): <code>…\Fujisawa V.2.1 for Development\docs\</code> (01-08 + README) · <code>…\dev-starter\</code> (functions / single-whattosee / ACF export จริง)</p>
   </div>

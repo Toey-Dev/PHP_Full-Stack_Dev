@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 2 — แกะ Stack ปลั๊กอิน: Plugin ไม่ใช่กล่องดำ</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="crumb"><a href="../index.html">PHP Full Stack Track</a> · Week 2</div>
+    <h1>🔌 แกะ Stack ปลั๊กอิน — Plugin ไม่ใช่กล่องดำ</h1>
+    <p>Week 1 เห็นแล้วว่าเว็บ dynamic ต้องมี "ประตูแก้ข้อมูล" (wp-admin) ให้ทีมคอนเทนต์ —
+    แต่ประตูนั้นมาจากไหน? มันคือ<strong>ปลั๊กอิน</strong> 12 ตัวที่ประกอบกันเป็น stack ของ Fujisawa
+    บทนี้แกะว่าแต่ละตัวเสกฟอร์มหลังบ้านขึ้นมายังไง — แล้วพบว่ามันคือโค้ด PHP ที่เสียบ hook เหมือนที่เราเขียนเองเป๊ะ</p>
+    <p style="margin-top:10px;font-size:.9rem;opacity:.85">⏱ เนื้อหา ~2-3 ชม. + Mission ~3-4 ชม. · 🎯 Mission: import ACF จริง + register CPT ด้วยโค้ดล้วน</p>
+  </div>
+</header>
+<div class="wrap">
+
+  <div class="card">
+    <h3 style="margin-top:0">🔑 คีย์เวิร์ดภาพจำ</h3>
+    <div class="kw-row">
+      <span class="kw">🔌 ปลั๊กอิน = โค้ดเรา + UI (ฟอร์มครอบโค้ด)</span>
+      <span class="kw">🏭 CPT UI = โรงงานที่กด register_post_type() ให้</span>
+      <span class="kw">📋 ACF = ช่างทำฟอร์ม + ตู้เก็บ postmeta</span>
+      <span class="kw">🌐 qTranslate = ล่ามที่ยืนหน้าประตู</span>
+      <span class="kw">⏰ init = ออดเปิดร้าน (register CPT ตอนนี้)</span>
+      <span class="kw">🏠 logic ผูก theme = theme · ต้องรอดข้าม theme = plugin</span>
+    </div>
+  </div>
+
+  <h2>🧠 แนวคิด & หลักการ</h2>
+  <div class="card">
+    <h3>หลักการ 1: ปลั๊กอินไม่ใช่เวทมนตร์ — มันคือ "UI ครอบโค้ด"</h3>
+    <p><strong>ปัญหาที่มันเกิดมาแก้:</strong> การสร้างชนิดข้อมูลใหม่ใน WordPress ต้องเขียนโค้ด PHP (<code>register_post_type()</code>)
+    แต่คนที่ดูแลเว็บส่วนใหญ่ — เจ้าของธุรกิจ, ทีมคอนเทนต์, นักการตลาด — เขียน PHP ไม่ได้
+    ปลั๊กอินอย่าง CPT UI เกิดมาเพื่อเป็น<em>ฟอร์มหลังบ้าน</em>ที่แปลง "การคลิกในหน้าจอ" เป็น "โค้ดที่ WordPress ต้องการ" ให้อัตโนมัติ</p>
+    <p><strong>เปรียบเปรย:</strong> ปลั๊กอิน = <em>เครื่องทำกาแฟแคปซูล</em> · เบื้องหลังยังเป็นการต้มกาแฟแบบเดิม (บดเมล็ด อัดแรงดัน)
+    แต่แทนที่จะให้คุณทำเองทุกขั้น มันซ่อนความยุ่งยากไว้หลังปุ่มเดียว — CPT UI ก็ซ่อน <code>register_post_type()</code> ไว้หลังฟอร์ม
+    <strong>สิ่งสำคัญคือ:</strong> เมื่อรู้ว่าข้างในคือการต้มกาแฟธรรมดา วันหนึ่งคุณก็ต้มเองด้วยมือได้ (เขียนโค้ดเอง) — นั่นคือเป้าของบทนี้</p>
+    <p>สูตรที่ใช้ได้กับปลั๊กอินทุกตัว: <strong>ปลั๊กอิน = โค้ด PHP (ที่เสียบ hook เหมือนเรา) + หน้าจอตั้งค่า + ที่เก็บ config ใน DB</strong></p>
+
+    <h3>หลักการ 2: ทุกปลั๊กอินเสียบ hook ที่เรารู้จักแล้วจาก Week 1</h3>
+    <p>จำ "รูปลั๊กไฟตามไทม์ไลน์" จาก Week 1 ได้ไหม? ปลั๊กอินทุกตัวก็เสียบปลั๊กที่รูเดียวกันนั้น:</p>
+    <table>
+      <tr><th>ปลั๊กอิน</th><th>เสียบที่ hook</th><th>ทำอะไร</th></tr>
+      <tr><td>CPT UI</td><td><code>init</code></td><td>อ่าน config จาก DB แล้วเรียก <code>register_post_type()</code> / <code>register_taxonomy()</code></td></tr>
+      <tr><td>ACF</td><td><code>acf/init</code>, <code>edit_form_*</code></td><td>วาด metabox ในหน้าแก้โพสต์ + เซฟค่าลง <code>wp_postmeta</code></td></tr>
+      <tr><td>qTranslate-XT</td><td>filter หลายจุด (<code>the_title</code>, <code>the_content</code>...)</td><td>ตัดภาษาที่ถูกต้องออกจากช่อง <code>[:en]…[:th]…</code> ตาม URL</td></tr>
+      <tr><td>AIOSEO</td><td><code>wp_head</code></td><td>พ่น meta description + Organization schema เข้า <code>&lt;head&gt;</code></td></tr>
+    </table>
+    <p>ไม่มีอะไรที่ปลั๊กอินทำได้แต่เราทำไม่ได้ — ต่างแค่มันมีหน้าจอสวยให้คนอื่นใช้</p>
+
+    <h3>หลักการ 3: เมื่อไหร่ใช้ปลั๊กอิน / เมื่อไหร่เขียนเอง / ใส่ไว้ที่ไหน</h3>
+    <p>เกณฑ์ทองที่จะตอบทั้งบท (มาจากเอกสารส่งมอบจริง): <strong>logic ผูกกับหน้าตา → ใส่ theme · logic ที่ข้อมูลต้องอยู่รอดแม้เปลี่ยน theme → ใส่ plugin</strong></p>
+    <p>นี่คือเหตุผลที่ <strong>CPT ต้องอยู่ใน plugin ไม่ใช่ theme</strong> — ถ้า register CPT ไว้ใน <code>functions.php</code> ของ theme
+    วันที่เปลี่ยน theme เนื้อหา 2,000+ ชิ้นของ Fujisawa จะ "หายไปจากเมนู admin" ทันที (ข้อมูลยังอยู่ใน DB แต่ WP ไม่รู้จัก post_type นั้นแล้ว = เข้าไม่ถึง)
+    Counter-example นี้คือฝันร้ายที่ทำให้ทีมมืออาชีพแยก CPT ออกเป็น plugin เสมอ</p>
+  </div>
+
+  <figure class="figure">
+    <svg viewBox="0 0 760 260" xmlns="http://www.w3.org/2000/svg" font-family="Sarabun,sans-serif" role="img" aria-label="CPT UI แปลงฟอร์มเป็นโค้ด register_post_type">
+      <defs><marker id="a1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#6b7280"/></marker></defs>
+      <rect x="15" y="45" width="175" height="120" rx="10" fill="#e4eff5" stroke="#15679f" stroke-width="2"/>
+      <text x="102" y="72" text-anchor="middle" font-size="13" font-weight="bold" fill="#0c3f5e">🖱 ฟอร์ม CPT UI</text>
+      <text x="102" y="96" text-anchor="middle" font-size="11" fill="#1f2937">พิมพ์ slug: whattosee</text>
+      <text x="102" y="114" text-anchor="middle" font-size="11" fill="#1f2937">☑ has archive</text>
+      <text x="102" y="132" text-anchor="middle" font-size="11" fill="#1f2937">☑ show in menu</text>
+      <text x="102" y="152" text-anchor="middle" font-size="10" fill="#6b7280">คนไม่เขียนโค้ดก็ทำได้</text>
+      <rect x="225" y="55" width="150" height="100" rx="10" fill="#fff" stroke="#15679f" stroke-width="2"/>
+      <text x="300" y="82" text-anchor="middle" font-size="12" font-weight="bold" fill="#0c3f5e">💾 เก็บ config</text>
+      <text x="300" y="104" text-anchor="middle" font-size="11" fill="#1f2937">ใน DB</text>
+      <text x="300" y="122" text-anchor="middle" font-size="11" fill="#6b7280">(wp_options)</text>
+      <text x="300" y="142" text-anchor="middle" font-size="10" fill="#6b7280">รอถูกอ่านตอน init</text>
+      <rect x="410" y="45" width="175" height="120" rx="10" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+      <text x="497" y="72" text-anchor="middle" font-size="12" font-weight="bold" fill="#92400e">⚙️ ตอน hook init</text>
+      <text x="497" y="98" text-anchor="middle" font-size="10.5" fill="#1f2937">register_post_type(</text>
+      <text x="497" y="116" text-anchor="middle" font-size="10.5" fill="#1f2937">'whattosee', [...] )</text>
+      <text x="497" y="140" text-anchor="middle" font-size="10" fill="#6b7280">= โค้ดที่เราเขียนเองได้</text>
+      <rect x="620" y="55" width="125" height="100" rx="10" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+      <text x="682" y="88" text-anchor="middle" font-size="12" font-weight="bold" fill="#047857">📋 CPT โผล่</text>
+      <text x="682" y="110" text-anchor="middle" font-size="11" fill="#1f2937">ในเมนู admin</text>
+      <text x="682" y="130" text-anchor="middle" font-size="11" fill="#1f2937">+ มี URL/archive</text>
+      <line x1="190" y1="105" x2="222" y2="105" stroke="#6b7280" stroke-width="2" marker-end="url(#a1)"/>
+      <line x1="375" y1="105" x2="407" y2="105" stroke="#6b7280" stroke-width="2" marker-end="url(#a1)"/>
+      <line x1="585" y1="105" x2="617" y2="105" stroke="#6b7280" stroke-width="2" marker-end="url(#a1)"/>
+      <text x="380" y="205" text-anchor="middle" font-size="12.5" fill="#1f2937">CPT UI = ตัวกลางที่แปลง "การคลิก" เป็น "โค้ด register_post_type()" ให้ตอน init</text>
+      <text x="380" y="228" text-anchor="middle" font-size="11.5" fill="#6b7280">เราข้ามตัวกลางแล้วเขียนโค้ดตรงๆ ก็ได้ผลลัพธ์เดียวกัน — นั่นคือ Mission สัปดาห์นี้</text>
+    </svg>
+    <figcaption>ภาพที่ 1: CPT UI ไม่ได้ทำอะไรวิเศษ — มันแค่กด register_post_type() แทนเราตอน hook init</figcaption>
+  </figure>
+
+  <h2>ส่วนที่ 1: CPT UI ทำงานยังไง (ตัวสร้าง "ชนิดข้อมูล")</h2>
+  <div class="card">
+    <p>เมื่อวีกดสร้าง post type ใน CPT UI แล้วเห็นเมนูใหม่โผล่ — เบื้องหลังคือโค้ดนี้ทำงานตอน hook <code>init</code>:</p>
+<pre><code>add_action('init', function () {                    // 1
+  register_post_type('whattosee', [                 // 2
+    'labels'      =&gt; ['name' =&gt; 'สถานที่ท่องเที่ยว'], // 3
+    'public'      =&gt; true,                           // 4
+    'has_archive' =&gt; true,                           // 5
+    'rewrite'     =&gt; ['slug' =&gt; 'sightseeing'],      // 6
+    'supports'    =&gt; ['title','editor','thumbnail'], // 7
+    'show_in_rest'=&gt; true,                            // 8
+  ]);
+});</code></pre>
+    <table>
+      <tr><th>บรรทัด</th><th>ทำไมต้องมี (ไม่ใช่แค่ทำอะไร)</th></tr>
+      <tr><td>1</td><td>เสียบที่ <code>init</code> — เพราะ register ต้องเกิด<strong>ทุกครั้งที่โหลดหน้า</strong> (CPT ไม่ได้ถูกจำถาวรใน DB · WP "ลืม" มันทุก request แล้วประกาศใหม่) init คือจุดที่ WP พร้อมรับการ register พอดี</td></tr>
+      <tr><td>2</td><td>ชื่อ slug <code>whattosee</code> = ค่าในคอลัมน์ <code>post_type</code> ของ wp_posts (เชื่อมกลับ Week 1!) — นี่คือ "ป้ายลิ้นชัก" ที่แยกเนื้อหาชนิดนี้ออกจากชนิดอื่น</td></tr>
+      <tr><td>3</td><td><code>labels</code> = ข้อความที่โผล่ในเมนู admin — เปลี่ยนแค่หน้าตา ไม่กระทบข้อมูล</td></tr>
+      <tr><td>4</td><td><code>public =&gt; true</code> = ให้มีหน้าเว็บสาธารณะ + โผล่ในผลค้นหา · ถ้า false = ข้อมูลระบบที่ไม่ให้คนนอกเห็น</td></tr>
+      <tr><td>5</td><td><code>has_archive =&gt; true</code> = เปิดหน้ารวม <code>/sightseeing/</code> อัตโนมัติ — <strong>ของจริง Fujisawa มีแค่ 4/18 CPT ที่ตั้ง true</strong> อีก 14 ตัวต้องทำ listing เอง (Week 3 + 6 เจาะ)</td></tr>
+      <tr><td>6</td><td><code>rewrite slug</code> = เปลี่ยน URL จาก <code>/whattosee/</code> เป็น <code>/sightseeing/</code> — <strong>ต้อง flush permalink</strong>หลังแก้ ไม่งั้น 404 (กับดักคลาสสิก)</td></tr>
+      <tr><td>7</td><td><code>supports</code> = เปิด/ปิดช่องในหน้าแก้โพสต์ · <strong>ทุก CPT ของ Fujisawa เปิดแค่ title/editor/thumbnail</strong> → เนื้อหาเชิงลึกทั้งหมดจึงอยู่ใน ACF (โยง Week 4)</td></tr>
+      <tr><td>8</td><td><code>show_in_rest =&gt; true</code> = ดึงผ่าน REST API + ใช้ Gutenberg ได้ · <strong>⚠️ มุม security:</strong> เปิด = เพิ่ม attack surface (ใครก็ query โครงสร้างข้อมูลผ่าน <code>/wp-json/</code> ได้) — ต้องรู้ตัวว่าเปิดอะไรออกไป</td></tr>
+    </table>
+    <div class="tip"><strong>ลองพิสูจน์เอง:</strong> CPT UI มีปุ่ม <strong>Tools → Get Code</strong> ที่ export โค้ด <code>register_post_type()</code> ตรงๆ จาก config ที่ตั้งไว้
+    — เปิดดูแล้วจะเห็นว่า "หน้าจอที่คลิก" กับ "โค้ดที่เราเขียน" คือสิ่งเดียวกัน</div>
+  </div>
+
+  <h2>ส่วนที่ 2: ACF ทำงานยังไง (ตัวสร้าง "ช่องกรอกข้อมูล")</h2>
+  <div class="card">
+    <p><strong>เปรียบเปรย:</strong> ถ้า CPT คือ "ตู้เอกสารเปล่า" ACF คือ<em>ช่างที่มาติดช่องกรอกเพิ่ม</em>ที่หน้าแฟ้ม —
+    ช่อง "เวลาเปิด-ปิด", "พิกัด", "FAQ" ที่ทีมคอนเทนต์กรอก แล้วมันแอบเก็บลง <code>wp_postmeta</code> (จำโพสต์อิทจาก Week 1 ได้ไหม)</p>
+    <p>เส้นทางข้อมูลของ ACF มี 4 สถานี:</p>
+    <table>
+      <tr><th>สถานี</th><th>เกิดอะไร</th></tr>
+      <tr><td>1. Field Group + Location Rule</td><td>บอกว่า "ช่องกรอกชุดนี้โผล่ที่ CPT ไหน" (เช่น location = post_type whattosee)</td></tr>
+      <tr><td>2. คนกรอกใน admin</td><td>ACF วาด metabox ให้กรอก แล้วเซฟลง <code>wp_postmeta</code> เป็นคู่ key–value</td></tr>
+      <tr><td>3. <code>get_field('opening_hours')</code></td><td>template ดึงค่ากลับมา — <strong>ข้างใต้คือ <code>get_post_meta()</code></strong> แต่ ACF แปลง type ให้พร้อมใช้</td></tr>
+      <tr><td>4. escape + แสดง</td><td><code>echo esc_html(...)</code> — Week 4 เจาะเต็ม</td></tr>
+    </table>
+    <div class="danger"><strong>🔍 Why <code>get_field()</code> ไม่ใช่ <code>get_post_meta()</code>:</strong>
+    field ชนิด image ถ้าใช้ <code>get_post_meta()</code> ได้แค่ตัวเลข ID ดิบ · แต่ <code>get_field()</code> คืน array พร้อม URL/alt/ขนาดต่างๆ ให้เลย
+    — ACF คือ "postmeta ที่แต่งตัวมาแล้ว" · แต่ต้องรู้ว่าข้างใต้คือ postmeta เสมอ เผื่อวันที่ต้อง debug หรือถอด ACF ออก</div>
+  </div>
+
+  <h2>ส่วนที่ 3: qTranslate + AIOSEO (2 ปลั๊กอินที่เสียบ filter/action)</h2>
+  <div class="card">
+    <p><strong>qTranslate-XT = ล่ามที่ยืนหน้าประตู:</strong> ทีมคอนเทนต์กรอกทุกภาษาในช่องเดียว <code>[:en]Sea Candle[:th]ประภาคาร[:]</code>
+    แล้ว qTranslate เสียบ filter ที่ <code>the_title</code>/<code>the_content</code> คอย "ตัดเฉพาะภาษาที่ URL ขอ" ออกมาก่อนแสดง
+    — คนดูหน้า <code>/th/</code> เห็นแค่ภาษาไทย ไม่เห็นแท็ก (Week 5 เจาะเต็ม + มีบั๊กจริงรอวีแก้)</p>
+    <p><strong>AIOSEO = เลขาที่แปะป้ายให้เครื่องอ่าน:</strong> เสียบ action ที่ <code>wp_head</code> พ่น <code>&lt;meta name="description"&gt;</code>
+    + Organization schema เข้าหัวเว็บทุกหน้า — เหมือน <code>inc/schema.php</code> ของ wlf ที่เราอ่านใน Week 1 แค่ทำเป็นปลั๊กอินสำเร็จรูป</p>
+    <p><strong>ประเด็นสำคัญของงาน redesign:</strong> AIOSEO ทำ schema พื้นฐาน (Organization/meta) ให้ แต่ schema เชิงลึกอย่าง
+    TouristAttraction + FAQPage + GeoCoordinates ที่ผูกกับ ACF ต้อง<strong>เขียนเองใน template</strong> (Week 8) — รู้ว่าปลั๊กอินทำถึงไหน เราต่อจากตรงไหน คือทักษะสำคัญ</p>
+  </div>
+
+  <h2>ส่วนที่ 4: อ่านโค้ดจริง — <code>functions-discover-fujisawa.php</code> ทีละฟังก์ชัน</h2>
+  <div class="card">
+    <p>นี่คือไฟล์ dev-starter จริงของโปรเจค (อยู่ใน <code>dev-starter/</code>) — โค้ดที่วีจะใช้จริง
+    ไฟล์ยาว ~250 บรรทัด แบ่งเป็น <strong>3 ก้อนงาน</strong> ไล่อ่าน<strong>ทีละฟังก์ชัน</strong> (โค้ดใหญ่ไม่อ่านทีละบรรทัด — ดูภาพรวมของแต่ละก้อนว่าทำอะไร ทำไม):</p>
+
+    <h3>ก้อนที่ 1 — <code>add_action('init', ...)</code>: register CPT + taxonomy</h3>
+<pre><code>if (!defined('ABSPATH')) exit;   // กันเปิดไฟล์ตรงๆ จากเบราว์เซอร์
+
+add_action('init', function () {
+  register_post_type('whattosee', [ /* ...args... */ ]);   // สถานที่
+  register_post_type('news',      [ /* ...args... */ ]);   // ข่าว
+
+  register_taxonomy('spot_cat', 'whattosee', [ /* ... */ ]);      // ประเภทสถานที่
+  register_taxonomy('news_category', 'news',  [ /* ... */ ]);     // หมวดข่าว
+});</code></pre>
+    <p><strong>ฟังก์ชันนี้ทำอะไร:</strong> ประกาศชนิดข้อมูล 2 ตัว (whattosee, news) + ป้ายจัดหมวด 2 ตัว ตอน init
+    <strong>· ทำไมรวมทุกอย่างใน action เดียว:</strong> เพราะทั้ง CPT และ taxonomy ต้อง register ที่ <code>init</code> เหมือนกัน — จับกลุ่มไว้ด้วยกันอ่านง่าย
+    <strong>· จุดสังเกต:</strong> <code>register_taxonomy('spot_cat', 'whattosee', ...)</code> ผูก taxonomy เข้ากับ CPT ตรงพารามิเตอร์ที่ 2 (Week 3 เจาะว่าทำไม taxonomy ถึงแชร์ข้าม CPT ได้)</p>
+    <div class="warn"><strong>NOTE จากไฟล์จริง (สำคัญมาก):</strong> คอมเมนต์ในไฟล์เตือนว่า <em>"production มี CPT อยู่แล้ว — ของจริงให้ตั้งผ่าน CPT UI แล้วเพิ่มเฉพาะฟิลด์ GEO ที่ขาด ไม่ต้อง re-register ทับ"</em>
+    → โค้ด register นี้ไว้เรียนรู้ + สำหรับ theme เปล่า · ถ้าเผลอ register ทับ CPT ที่ CPT UI ทำไว้ = ตั้งค่าชนกัน เว็บพัง</div>
+
+    <h3>ก้อนที่ 2 — <code>add_action('acf/init', ...)</code>: ประกาศ ACF field ด้วยโค้ด</h3>
+<pre><code>add_action('acf/init', function () {
+  if (!function_exists('acf_add_local_field_group')) return;  // กัน error ถ้าไม่มี ACF
+
+  acf_add_local_field_group([
+    'key'      =&gt; 'group_df_spot_geo',
+    'title'    =&gt; 'สถานที่ — ข้อมูล GEO/AEO',
+    'location' =&gt; [[['param'=&gt;'post_type','operator'=&gt;'==','value'=&gt;'whattosee']]],
+    'fields'   =&gt; [ /* summary_th, opening_hours, geo_lat, faq(repeater)... */ ],
+  ]);
+});</code></pre>
+    <p><strong>ฟังก์ชันนี้ทำอะไร:</strong> สร้าง Field Group ด้วย<em>โค้ด</em>แทนการคลิกใน ACF UI
+    <strong>· ทำไมต้องมีบรรทัด <code>if (!function_exists(...))</code>:</strong> guard clause (จำจาก Week 1!) — ถ้าปลั๊กอิน ACF ถูกปิด ฟังก์ชันนี้จะไม่มีอยู่ เรียกไปเว็บล่ม เช็คก่อนเรียกจึงปลอดภัย
+    <strong>· <code>location</code> คืออะไร:</strong> "Location Rule" = กติกาว่า field ชุดนี้โผล่ที่ไหน — ตรงนี้บอกว่า "โผล่เมื่อ post_type == whattosee"
+    <strong>· ทำไมประกาศ ACF ด้วยโค้ดแทน UI:</strong> เพื่อ version control (เข้า git เห็น diff ได้) และ deploy ไปกับ theme — Week 4 เจาะเรื่อง acf-json</p>
+
+    <h3>ก้อนที่ 3 — <code>df_get_banner_emergency()</code>: helper ดึงข่าวฉุกเฉิน</h3>
+<pre><code>function df_get_banner_emergency() {
+  $now = current_time('Y-m-d H:i:s');
+  $q = new WP_Query([
+    'post_type'  =&gt; 'news',
+    'meta_query' =&gt; [ /* display_in_banner=1 AND category=emergency AND ยังไม่หมดอายุ */ ],
+  ]);
+  if ($q-&gt;have_posts()) { /* ...คืน text + url... */ }
+  return null;
+}</code></pre>
+    <p><strong>ฟังก์ชันนี้ทำอะไร:</strong> ค้นข่าวที่ตั้งธง "ฉุกเฉิน + ให้ขึ้นแบนเนอร์ + ยังไม่หมดอายุ" มา 1 ข่าว เพื่อเอาไปโชว์แถบแดงบนหัวเว็บ
+    <strong>· ทำไมเป็น helper แยก:</strong> เพราะ <code>header.php</code> เรียกใช้ได้จากที่เดียว คุมง่าย (Week 6 จะเอาไปใช้จริง)
+    <strong>· ตอนนี้ยังไม่ต้องเข้าใจ <code>meta_query</code> ลึก</strong> — Week 6 (WP_Query) จะผ่าทีละบรรทัด รวมถึง<em>กับดักจริง</em>ในนั้น · ตอนนี้ขอแค่เห็นว่า "helper = ฟังก์ชันของเราที่ห่อ query ไว้ให้เรียกซ้ำได้"</p>
+  </div>
+
+  <h2>ตัวอย่างประยุกต์</h2>
+  <div class="card">
+    <p><strong>🏢 งานวี:</strong> ใน stack ของ Fujisawa มีปลั๊กอินชื่อ <strong>"Fujisawa migration system"</strong> ที่<em>ทีมเขียนเอง</em>
+    เพื่อสร้างตาราง <code>wp_import_*</code> 18 ตัวและย้ายข้อมูล — นี่คือหลักฐานตรงหน้าว่า "เขียน plugin เองได้จริง และทีมวีก็ทำอยู่แล้ว"
+    ปลั๊กอินไม่ใช่ของที่ต้องซื้อ/ดาวน์โหลดเท่านั้น เมื่อเข้าใจว่ามันคือโค้ด PHP + hook เราสร้างเองได้ตามต้องการ</p>
+    <p><strong>🌏 อุตสาหกรรม:</strong> WooCommerce (ปลั๊กอิน e-commerce อันดับ 1) ก็แค่ปลั๊กอินตัวใหญ่ที่ <code>register_post_type('product')</code>
+    + register taxonomy <code>product_cat</code> + เพิ่ม meta ราคา — โครงเดียวกับที่วีกำลังจะเขียนใน Mission เป๊ะ ต่างแค่ scale</p>
+  </div>
+
+  <h2>🧹 Clean Code ประจำ Week 2 — เขียน register แบบมืออาชีพ</h2>
+  <div class="card">
+    <h3>1. แยกไฟล์ register ออกจาก functions.php</h3>
+    <div class="clean">
+      <div class="bad"><h4>❌ ยัดทุกอย่างใน functions.php</h4>
+<pre><code>// functions.php ยาว 800 บรรทัด
+// register CPT + ACF + enqueue +
+// menu + helper ปนกันหมด
+// → หาอะไรไม่เจอ + merge conflict</code></pre></div>
+      <div class="good"><h4>✅ แยกตามหน้าที่ แล้ว require</h4>
+<pre><code>// functions.php = สารบัญ
+require 'inc/post-types.php';
+require 'inc/acf-fields.php';
+require 'inc/enqueue.php';
+// แต่ละไฟล์ทำเรื่องเดียว หาง่าย</code></pre></div>
+    </div>
+
+    <h3>2. Associative array มี key ชัด แทนพารามิเตอร์เรียงตำแหน่ง</h3>
+    <div class="clean">
+      <div class="bad"><h4>❌ อ่านแล้วไม่รู้แต่ละค่าคืออะไร</h4>
+<pre><code>// สมมุติมีฟังก์ชันแบบนี้
+make_cpt('whattosee', true, true,
+         false, 'sightseeing', 5);
+// true true false 5 คืออะไร??</code></pre></div>
+      <div class="good"><h4>✅ WP ใช้ array key — อ่านออกทันที</h4>
+<pre><code>register_post_type('whattosee', [
+  'public'      =&gt; true,
+  'has_archive' =&gt; true,
+  'menu_position'=&gt; 5,
+]); // ชื่อ key = documentation</code></pre></div>
+    </div>
+    <div class="warn"><strong>กฎทอง:</strong> WordPress เลือกใช้ array แบบ key–value ในทุก API ไม่ใช่เพราะบังเอิญ —
+    เพราะ config มีหลายสิบตัวเลือก การเรียงตามตำแหน่งจะจำไม่ไหวและอ่านไม่ออก · เขียนโค้ดของเราให้ตามสไตล์นี้ด้วย</div>
+  </div>
+
+  <h2>🎯 Mission 2 — register CPT ด้วยโค้ดล้วน + import ACF จริง</h2>
+  <div class="danger" style="margin-bottom:16px">
+    🤖 <strong>กฎ AI สองโหมด:</strong> ปิด AI เขียนมือ · ติดเกิน 20 นาทีขอ hint ทีละชั้น (ไม่เขียนแทน)
+  </div>
+  <div class="mission">
+    <h3>เป้าหมาย <span class="badge orange">~3-4 ชม.</span></h3>
+    <p>ต่อยอด sandbox จาก Week 1 — พิสูจน์ว่า "ทำมือได้เท่าปลั๊กอิน" + สัมผัส ACF จริงของ production</p>
+
+    <div class="step"><div class="num">1</div><div>
+      <strong>register CPT ด้วยโค้ดล้วน (ไม่ใช้ CPT UI)</strong> — สร้าง plugin เล็ก <code>travel-spot-cpt</code>
+      register post type 1 ตัว (เช่น <code>travel_spot</code>) + taxonomy 1 ตัว (<code>spot_area</code>) ด้วยโค้ด · เปิด <code>has_archive</code> + flush permalink แล้วดู URL ทำงาน</div></div>
+
+    <div class="step"><div class="num">2</div><div>
+      <strong>import ACF จริงของ Fujisawa</strong> — เอาไฟล์ <code>dev-starter/reference/acf-export-2026-07-08.json</code> (24 field groups จริง)
+      import ผ่าน <strong>ACF → Tools → Import</strong> บน sandbox · เปิดดูโครงสร้าง field ของจริง (แค่ดู ยังไม่ต้องแก้ — Week 4 ค่อยลงลึก)</div></div>
+
+    <div class="step"><div class="num">3</div><div>
+      <strong>ยืนยันด้วย Query Monitor</strong> — เปิดหน้า admin ของ CPT ที่เพิ่ง register ดู panel <strong>Hooks</strong>
+      หาว่า callback ของเราถูกเรียกที่ <code>init</code> จริง + ดูว่า <code>register_post_type</code> ทำงานตอนไหน</div></div>
+
+    <div class="step"><div class="num">4</div><div>
+      <strong>เทียบกับ CPT UI</strong> — ลองสร้าง CPT อีกตัวผ่าน CPT UI แล้วกด <strong>Tools → Get Code</strong>
+      เอาโค้ดที่มัน generate มาเทียบกับที่เราเขียนมือในข้อ 1 → เขียนใส่ README ว่าเหมือน/ต่างตรงไหน</div></div>
+
+    <div class="step"><div class="num">5</div><div>
+      <strong>README + push GitHub</strong> — repo <code>travel-spot-cpt</code> · อธิบายทุก arg ของ <code>register_post_type</code> ที่ใช้ (ทำไมเลือกค่านั้น)
+      + ตอบคำถาม "ทำไม CPT ควรอยู่ใน plugin ไม่ใช่ theme" ใน README · AI Usage section</div></div>
+  </div>
+
+  <div class="card">
+    <h3>✅ Definition of Done</h3>
+    <ul class="check">
+      <li>CPT + taxonomy ที่เขียนมือ โผล่ในเมนู admin · เพิ่มโพสต์ได้ · หน้า archive เปิดได้ (URL ไม่ 404)</li>
+      <li>ลอง<strong>ปิด plugin</strong> ดู → CPT หายจากเมนู แต่โพสต์ยังอยู่ใน DB → เปิดกลับ CPT คืนมา = เข้าใจว่าทำไม "CPT อยู่ theme แล้วเปลี่ยน theme = ข้อมูลหายจากเมนู"</li>
+      <li>import ACF 24 groups สำเร็จ · เปิดหน้าแก้โพสต์ whattosee เห็น metabox ของจริง</li>
+      <li>README อธิบาย args ครบ + ตอบคำถาม plugin vs theme + Quiz ตอบได้</li>
+    </ul>
+  </div>
+
+  <h2>📝 Quiz — ทดสอบความเข้าใจ</h2>
+  <details><summary>ข้อ 1: ทำไม <code>register_post_type()</code> ต้องเรียกที่ hook <code>init</code> ทุก request ไม่เก็บถาวรใน DB ทีเดียว?</summary>
+    <p>เพราะ WordPress "ลืม" CPT ทุกครั้งที่จบ request — โค้ด PHP รันใหม่หมดทุกครั้งที่มีคนเปิดหน้า
+    CPT ไม่ใช่ข้อมูลใน DB แต่เป็น "การประกาศ" ที่ต้องทำใหม่ทุกรอบ · <code>init</code> คือจังหวะที่ WP โหลดเสร็จพอจะรับ register แล้ว
+    (สิ่งที่เก็บถาวรใน DB คือ<em>ตัวโพสต์</em>ใน wp_posts — ไม่ใช่นิยามของ post type)</p></details>
+  <details><summary>ข้อ 2: CPT UI กับการเขียน <code>register_post_type()</code> เอง ให้ผลต่างกันไหม? แล้วปลั๊กอินมีข้อดีอะไร</summary>
+    <p>ผลลัพธ์เหมือนกันเป๊ะ (CPT UI พิสูจน์เองด้วยปุ่ม Get Code) — ต่างที่ CPT UI ให้คนไม่เขียนโค้ดตั้งค่าได้ผ่านฟอร์ม + เก็บ config ใน DB
+    ส่วนเขียนโค้ดเองได้ version control + deploy ไปกับ theme/plugin + ปรับแต่งลึกกว่า · เลือกตามทีม: มีคนแก้ที่ไม่ใช่ dev → UI / อยาก track ใน git → โค้ด</p></details>
+  <details><summary>ข้อ 3 (security/production): CPT ทุกตัวของ Fujisawa ตั้ง <code>show_in_rest =&gt; true</code> — สิ่งนี้กระทบ attack surface ยังไง?</summary>
+    <p>เปิด REST = ใครก็ได้ยิง <code>/wp-json/wp/v2/{cpt}</code> เพื่อดูโครงสร้าง/รายการข้อมูลได้โดยไม่ต้อง login (สำหรับ public CPT)
+    — เพิ่มพื้นที่ให้ถูกสำรวจ (enumeration) · ไม่ใช่ช่องโหว่โดยตรง แต่ต้องรู้ว่าเปิดอะไรออกไป: ข้อมูลที่ไม่อยากให้ดึงง่ายๆ ควรพิจารณาปิด REST หรือจำกัดสิทธิ์
+    (โยง Week 4: ACF field ก็มี <code>show_in_rest</code> แยกอีกชั้น) · หลักคิด: เปิดเท่าที่จำเป็น (least exposure)</p></details>
+  <details><summary>ข้อ 4: NOTE ในไฟล์ dev-starter เตือนว่า "อย่า re-register ทับ CPT ที่ production มีอยู่แล้ว" — ทำไมถึงอันตราย?</summary>
+    <p>ถ้า CPT UI ตั้ง <code>whattosee</code> ไว้แล้ว แล้วเราเขียนโค้ด register <code>whattosee</code> ซ้ำด้วย args คนละชุด
+    = ตั้งค่าชนกัน (เช่น slug/has_archive/supports ไม่ตรง) → พฤติกรรมกลายเป็นอันไหนโหลดทีหลังชนะ คาดเดายาก · หน้าอาจ 404 หรือ field หาย
+    · ทางถูก: production ใช้ CPT UI อยู่แล้ว → เราแค่ "เพิ่มเฉพาะ ACF field ที่ขาด" ไม่แตะการ register CPT เดิม</p></details>
+
+  <div class="card" style="border:2px solid var(--brand)">
+    <h3 style="margin-top:0">⏭ สัปดาห์หน้า</h3>
+    <p style="margin:0"><strong>Week 3 — Data Model จริง: 18 CPT + 8 Taxonomy ⭐:</strong>
+    เมื่อรู้แล้วว่า register ทำงานยังไง คราวนี้มาอ่าน "แผนที่ข้อมูล" ทั้งระบบของ Fujisawa —
+    เกณฑ์ตัดสิน CPT/Taxonomy/Field, ระบบ prefix + flag, และปริศนา <code>whattosee</code> vs <code>sstr_spot</code> ที่ต้องถามทีมก่อนเริ่ม dev จริง</p>
+  </div>
+
+  <div class="nav-bottom">
+    <a class="btn ghost" href="../week-01/index.html">← Week 1</a>
+    <a class="btn ghost" href="../index.html">หน้ารวมคอร์ส</a>
+    <span class="btn" style="background:#9ca3af;cursor:default">Week 3 (รอสร้าง) →</span>
+  </div>
+  <footer>PHP Full Stack Track × Fujisawa V2.1 · Week 2 · มาตรฐานบทเรียน 7 ส่วน</footer>
+</div>
+</body>
+</html>

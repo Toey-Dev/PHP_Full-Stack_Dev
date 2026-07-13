@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 3 — Data Model จริง: 18 CPT + 8 Taxonomy</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="crumb"><a href="../index.html">PHP Full Stack Track</a> · Week 3</div>
+    <h1>🗂 Data Model จริง — 18 CPT + 8 Taxonomy</h1>
+    <p>เว็บ dynamic ที่ดีเริ่มจาก "ออกแบบข้อมูล" ไม่ใช่ "ออกแบบหน้าตา" — ก่อนวีจะแตะ template แม้แต่ไฟล์เดียว
+    ต้องอ่าน<strong>แผนที่ข้อมูล</strong>ของ Fujisawa ให้ออกก่อน: อะไรคือ CPT อะไรคือ Taxonomy อะไรคือ Field และทำไม
+    บทนี้คือทักษะ "อ่าน data model ของคนอื่นให้ขาด" ที่ dev มืออาชีพใช้ทุกวัน</p>
+    <p style="margin-top:10px;font-size:.9rem;opacity:.85">⏱ เนื้อหา ~2-3 ชม. + Mission ~3-4 ชม. · 🎯 Mission: DESIGN-ANALYSIS.md + ลิสต์คำถามทีม (ใช้ประชุมจริงได้)</p>
+  </div>
+</header>
+<div class="wrap">
+
+  <div class="card">
+    <h3 style="margin-top:0">🔑 คีย์เวิร์ดภาพจำ</h3>
+    <div class="kw-row">
+      <span class="kw">📛 CPT = คำนาม (ชนิดของสิ่ง มีหน้าของตัวเอง)</span>
+      <span class="kw">🏷 Taxonomy = ป้ายจัดหมวด (แชร์ข้าม CPT ได้)</span>
+      <span class="kw">⚙️ Field = คุณสมบัติเฉพาะตัว</span>
+      <span class="kw">🚦 flag = สวิตช์ Show/Hide (listing ต้องกรองเสมอ)</span>
+      <span class="kw">👯 whattosee vs sstr_spot = ฝาแฝดที่ต้องถามทีม</span>
+      <span class="kw">🔤 prefix = นามสกุลบอกตระกูล (sslc/ssws/ssnb)</span>
+    </div>
+  </div>
+
+  <h2>🧠 แนวคิด & หลักการ</h2>
+  <div class="card">
+    <h3>หลักการ 1: "ออกแบบข้อมูลก่อน ออกแบบหน้า"</h3>
+    <p><strong>ปัญหาที่มันแก้:</strong> มือใหม่เริ่มจาก "หน้าตาอยากให้เป็นแบบนี้" แล้วยัดข้อมูลตามหลัง → พอเว็บโต ข้อมูลซ้ำ กรองไม่ได้ query ช้า
+    · มือโปรเริ่มจาก "ข้อมูลนี้มีโครงสร้างยังไง สัมพันธ์กับอะไร" แล้วค่อยสร้างหน้ามาแสดง — ลำดับที่ถูกคือ
+    <strong>data model → URL → template → style</strong> (สวนทางมือใหม่ทุกข้อ)</p>
+    <p><strong>เปรียบเปรย:</strong> data model = <em>พิมพ์เขียวบ้าน</em> · จะวางท่อน้ำ/สายไฟที่ไหนต้องรู้ตั้งแต่ก่อนเทปูน
+    — จะมาทุบผนังเดินท่อใหม่ตอนบ้านเสร็จแล้วคือหายนะ · การ redesign Fujisawa ก็เหมือนกัน: เข้าใจพิมพ์เขียวข้อมูลเดิมก่อน ค่อยรีโนเวทหน้าตา</p>
+
+    <h3>หลักการ 2: 3 คำถามที่ตัดสินว่าสิ่งหนึ่งเป็นอะไร</h3>
+    <p>ทุกครั้งที่เจอ "ข้อมูลชิ้นใหม่" ถาม 3 คำถามนี้ตามลำดับ:</p>
+    <table>
+      <tr><th>คำถาม</th><th>ถ้าใช่ = </th><th>ตัวอย่างใน Fujisawa</th></tr>
+      <tr><td>มันเป็น "สิ่ง" ที่มีหน้ารายละเอียดของตัวเองไหม?</td><td><strong>CPT</strong></td><td>สถานที่, ร้านอาหาร, โรงแรม, ข่าว, อีเวนต์</td></tr>
+      <tr><td>มันเป็น "ป้าย" ที่ใช้จัดกลุ่ม/กรอง และใช้ซ้ำได้หลายสิ่งไหม?</td><td><strong>Taxonomy</strong></td><td>ประเภทสถานที่, ย่าน, ฤดูกาล</td></tr>
+      <tr><td>มันเป็น "คุณสมบัติเฉพาะตัว" ของสิ่งนั้นไหม?</td><td><strong>Field (ACF)</strong></td><td>เวลาเปิด-ปิด, พิกัด, ราคา, ชื่อภาษาอังกฤษ</td></tr>
+    </table>
+
+    <h3>หลักการ 3: เมื่อไหร่เป็น Taxonomy / เมื่อไหร่เป็น Field (จุดที่พลาดบ่อยสุด)</h3>
+    <p>"ย่าน (area)" ควรเป็น taxonomy หรือ ACF select field? — คำถามคลาสสิกที่แยกมือใหม่กับมือโปร คำตอบ: <strong>taxonomy</strong> เพราะ:</p>
+    <ul>
+      <li>ใช้ <em>กรอง</em> ("โรงแรมทั้งหมดในย่าน Enoshima") → taxonomy มี index ให้ query เร็ว · ถ้าเป็น field ต้อง <code>meta_query LIKE</code> = ช้า</li>
+      <li>ได้ <em>หน้า archive ฟรี</em> — URL <code>/area/enoshima/</code> ทำงานเองโดยไม่ต้องเขียน</li>
+      <li>ใช้ <em>ซ้ำข้าม CPT</em> ได้ — ย่านเดียวกันผูกได้ทั้งโรงแรม ร้านอาหาร สถานที่</li>
+    </ul>
+    <p><strong>Counter-example:</strong> ถ้าทำ area เป็น ACF select field — query "ทุกอย่างในย่านนี้" จะช้าลงเรื่อยๆ เมื่อข้อมูลโต, ไม่มีหน้า archive, และต้องก๊อป choices ไปทุก CPT (แก้ที่เดียวไม่พอ) · นี่คือเหตุผลที่ Fujisawa แยก <code>ssnb__mst_area</code>, <code>ssws__mst_area</code> เป็น taxonomy</p>
+  </div>
+
+  <figure class="figure">
+    <svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" font-family="Sarabun,sans-serif" role="img" aria-label="เกณฑ์ตัดสิน CPT vs Taxonomy vs Field">
+      <rect x="270" y="20" width="220" height="46" rx="10" fill="#e4eff5" stroke="#15679f" stroke-width="2"/>
+      <text x="380" y="40" text-anchor="middle" font-size="13" font-weight="bold" fill="#0c3f5e">ข้อมูลชิ้นใหม่มา 1 ชิ้น</text>
+      <text x="380" y="57" text-anchor="middle" font-size="11" fill="#6b7280">เช่น "ร้านอาหาร" / "ย่าน" / "ราคา"</text>
+      <line x1="380" y1="66" x2="380" y2="88" stroke="#6b7280" stroke-width="2"/>
+      <rect x="70" y="95" width="200" height="90" rx="10" fill="#fff" stroke="#059669" stroke-width="2"/>
+      <text x="170" y="120" text-anchor="middle" font-size="12" font-weight="bold" fill="#047857">📛 CPT</text>
+      <text x="170" y="142" text-anchor="middle" font-size="11" fill="#1f2937">มีหน้ารายละเอียด</text>
+      <text x="170" y="159" text-anchor="middle" font-size="11" fill="#1f2937">ของตัวเองไหม?</text>
+      <text x="170" y="177" text-anchor="middle" font-size="10.5" fill="#6b7280">ร้านอาหาร = ใช่ → CPT</text>
+      <rect x="285" y="95" width="200" height="90" rx="10" fill="#fff" stroke="#d97706" stroke-width="2"/>
+      <text x="385" y="120" text-anchor="middle" font-size="12" font-weight="bold" fill="#92400e">🏷 Taxonomy</text>
+      <text x="385" y="142" text-anchor="middle" font-size="11" fill="#1f2937">เป็นป้ายจัดกลุ่ม</text>
+      <text x="385" y="159" text-anchor="middle" font-size="11" fill="#1f2937">ใช้ซ้ำหลายสิ่งไหม?</text>
+      <text x="385" y="177" text-anchor="middle" font-size="10.5" fill="#6b7280">ย่าน = ใช่ → Taxonomy</text>
+      <rect x="500" y="95" width="200" height="90" rx="10" fill="#fff" stroke="#15679f" stroke-width="2"/>
+      <text x="600" y="120" text-anchor="middle" font-size="12" font-weight="bold" fill="#0c3f5e">⚙️ Field</text>
+      <text x="600" y="142" text-anchor="middle" font-size="11" fill="#1f2937">เป็นคุณสมบัติ</text>
+      <text x="600" y="159" text-anchor="middle" font-size="11" fill="#1f2937">เฉพาะตัวไหม?</text>
+      <text x="600" y="177" text-anchor="middle" font-size="10.5" fill="#6b7280">ราคา = ใช่ → Field</text>
+      <line x1="380" y1="88" x2="170" y2="93" stroke="#6b7280" stroke-width="1.5"/>
+      <line x1="380" y1="88" x2="600" y2="93" stroke="#6b7280" stroke-width="1.5"/>
+      <rect x="120" y="215" width="520" height="66" rx="10" fill="#fffbeb" stroke="#d97706" stroke-width="1.5"/>
+      <text x="380" y="240" text-anchor="middle" font-size="12" font-weight="bold" fill="#92400e">⚡ กับดัก: "ย่าน" ทำเป็น Field ก็ได้ — แต่จะกรองช้า + ไม่มี archive + แก้หลายที่</text>
+      <text x="380" y="263" text-anchor="middle" font-size="11.5" fill="#1f2937">ถ้าใช้ "กรอง" หรือ "ใช้ซ้ำข้าม CPT" → เลือก Taxonomy เสมอ (ได้ index + URL ฟรี)</text>
+    </svg>
+    <figcaption>ภาพที่ 1: ต้นไม้ตัดสินใจ CPT / Taxonomy / Field — เครื่องมือที่ใช้อ่าน data model ของ Fujisawa ทั้ง 18 ตัว</figcaption>
+  </figure>
+
+  <h2>ส่วนที่ 1: 18 CPT จริง + ระบบ prefix (อ่าน "นามสกุล" ให้ออก)</h2>
+  <div class="card">
+    <p>ชื่อ CPT ของ Fujisawa ดูน่ากลัวตอนแรก (<code>sslc__shop</code>, <code>oiac__tjpn__item</code>) แต่มันมีระบบ —
+    <strong>prefix คือ "นามสกุล" ที่บอกว่า CPT นี้อยู่ตระกูลไหน:</strong></p>
+    <table>
+      <tr><th>prefix</th><th>ตระกูล</th><th>CPT ในตระกูล</th></tr>
+      <tr><td><code>sstr</code></td><td>Tourism spots/routes</td><td><code>sstr_spot</code>, <code>sstr_grpd_route</code></td></tr>
+      <tr><td><code>sslc</code></td><td>Local Cuisine (อาหาร)</td><td><code>sslc__shop</code></td></tr>
+      <tr><td><code>ssnb</code></td><td>Nightlife &amp; BAR</td><td><code>ssnb__shop</code></td></tr>
+      <tr><td><code>ssws</code></td><td>Where to Stay (ที่พัก)</td><td><code>ssws__shop</code></td></tr>
+      <tr><td><code>ssse</code></td><td>Seasonal Event</td><td><code>ssse__event</code></td></tr>
+      <tr><td><code>oisa</code> / <code>oiac</code></td><td>Info/Duty-free / Activities</td><td><code>oisa__df__shop</code>, <code>oiac__tmar__item</code>...</td></tr>
+    </table>
+    <p>+ ตัวที่ชื่อตรงไปตรงมา: <code>whattosee</code>, <code>news</code>, <code>video</code>, <code>pass</code>, <code>brochure_download</code>, <code>top-page-main-visual</code>
+    · รวม <strong>18 CPT</strong> ครอบคลุมดีไซน์ 17/18 หน้า</p>
+    <div class="tip"><strong>ทำไมต้องอ่าน prefix ออก:</strong> เวลาเขียน template หรือ query ในงานจริง จะเดาชื่อ field/CPT ในตระกูลเดียวกันได้ทันที
+    (เห็น <code>ssws__shop</code> ก็เดาได้ว่า field น่าจะขึ้นต้น <code>ssws__shop__</code>) — ระบบ naming ที่ดีลดการเปิดเอกสารซ้ำ (Week 4 เจาะ field naming เต็ม)</div>
+  </div>
+
+  <h2>ส่วนที่ 2: 8 Taxonomy + ระบบ flag</h2>
+  <div class="card">
+    <p>Taxonomy จริงที่ผูกกับ CPT เพื่อทำ "ตัวกรอง" ในดีไซน์:</p>
+    <table>
+      <tr><th>Taxonomy</th><th>ผูกกับ CPT</th><th>ใช้ในดีไซน์</th></tr>
+      <tr><td><code>spot_cat</code></td><td>whattosee</td><td>ฟิลเตอร์ "ประเภท" ใน ExploreSpots</td></tr>
+      <tr><td><code>seasons</code></td><td>ssse__event</td><td>4 ฤดู (Spring–Winter = term archive)</td></tr>
+      <tr><td><code>ssnb__mst_area</code> / <code>mst_genre</code></td><td>ssnb__shop</td><td>ฟิลเตอร์ย่าน/แนว BAR</td></tr>
+      <tr><td><code>ssws__mst_area</code> / <code>ssws__mst_feature</code></td><td>ssws__shop</td><td>ฟิลเตอร์พื้นที่/สิ่งอำนวยความสะดวก</td></tr>
+    </table>
+
+    <h3>🚦 ระบบ flag — สวิตช์ Show/Hide ที่ต้องกรองเสมอ</h3>
+    <p><strong>เปรียบเปรย:</strong> ทุก CPT ของ Fujisawa มี field ชื่อลงท้าย <code>__flag</code> (เช่น <code>sslc__shop__flag</code>) — มันคือ<em>สวิตช์ไฟ</em>ของแต่ละโพสต์
+    ทีมคอนเทนต์ปิดสวิตช์เพื่อ "ซ่อนชั่วคราวโดยไม่ต้องลบ" (ร้านปิดปรับปรุง, อีเวนต์จบแล้ว)</p>
+    <div class="danger"><strong>💥 กับดักที่ต้องระวังทุก listing:</strong> เวลา query รายการมาแสดง <strong>ต้องกรอง <code>flag == true</code> เสมอ</strong>
+    ไม่งั้นโพสต์ที่ทีมตั้งใจซ่อนจะโผล่บนเว็บ · counter-example จริง: ลืมกรอง flag → ร้านที่ปิดกิจการไปแล้วยังโชว์อยู่หน้าเว็บ ลูกค้าเดินทางไปเก้อ = เรื่องร้องเรียน
+    (Week 6 จะเขียน <code>meta_query</code> กรอง flag จริง)</div>
+  </div>
+
+  <h2>ส่วนที่ 3: ปริศนาของจริง 3 ข้อ (ที่ dev ต้องเคลียร์ก่อนเริ่ม)</h2>
+  <div class="card">
+    <h3>👯 ปริศนา 1: <code>whattosee</code> vs <code>sstr_spot</code> — สถานที่ 2 CPT ซ้อนกัน</h3>
+    <p>Fujisawa มี CPT ที่เป็น "สถานที่" <strong>2 ตัว</strong>:</p>
+    <table>
+      <tr><th></th><th><code>whattosee</code></th><th><code>sstr_spot</code></th></tr>
+      <tr><td>Label</td><td>What to see</td><td>Tourism spots</td></tr>
+      <tr><td>has_archive</td><td>true</td><td>false</td></tr>
+      <tr><td>taxonomy</td><td><code>spot_cat</code></td><td>ผูกกับ <code>sstr_grpd_route</code> (เส้นทาง)</td></tr>
+      <tr><td>ดีไซน์ที่ map มา</td><td>ExploreSpots / SpotDetail</td><td>จุดในเส้นทาง (Itineraries)</td></tr>
+    </table>
+    <p>ดีไซน์ SpotDetail ของเรา map มาที่ <code>whattosee</code> — แต่ <code>sstr_spot</code> ก็มีข้อมูลจริง 10+ รายการ
+    <strong>นี่คือ Risk R7 ในเอกสาร:</strong> ถ้า query ผิด CPT = หน้าไม่มีข้อมูล · <em>ต้องถามทีมก่อน</em>ว่าบทบาทต่างกันยังไง จะ map ไปตัวไหน</p>
+
+    <h3>🪦 ปริศนา 2: <code>ss_whattosee</code> — ศพ template ที่ค้างในธีม</h3>
+    <p>ในธีมจริงมีไฟล์ <code>single-ss_whattosee.php</code> และ <code>templates/ss_whattosee.php</code> — แต่ CPT ชื่อ <code>ss_whattosee</code>
+    <strong>ไม่มีอยู่แล้ว</strong> · สาเหตุ: เดิม CPT ชื่อนี้ ถูก<em>rename เป็น <code>whattosee</code></em> ผ่านฟีเจอร์ "Migrate posts" ของ CPT UI (โพสต์ย้ายไป type ใหม่หมด) แต่ไฟล์ template เก่าค้างไว้
+    → <strong>ลบได้ปลอดภัย</strong> (ยืนยันจาก CPT UI แล้ว) · บทเรียน: ⚠️ ห้ามแก้ slug ของ CPT เล่นๆ — การเปลี่ยน slug = register type ใหม่ เนื้อหาเดิมหลุด (ต้องติ๊ก migrate เสมอ = Risk R1)</p>
+
+    <h3>📦 ปริศนา 3: <code>has_archive:false</code> 14 ตัว + <code>can_export:false</code> ทุกตัว</h3>
+    <p><strong>has_archive:false (14/18 CPT):</strong> WordPress ไม่สร้างหน้ารวมให้อัตโนมัติ → ต้องทำ listing เองผ่าน page template + <code>WP_Query</code> หรือปลั๊กอิน Custom Post Type Archives (Week 6 ทำจริง)</p>
+    <p><strong>can_export:false (ทุก CPT):</strong> การ export <code>Tools → All content</code> (WXR) จะ<em>ไม่มีเนื้อหา CPT ติดมาเลย</em> (ได้แค่ page/post/attachment)
+    → เวลา migrate ข้อมูลไป sandbox ต้องพึ่ง DB dump หรือ REST API ไม่ใช่ WXR ปกติ (Risk R2 — มีผลกับ Mission ที่ต้องมีข้อมูลทดสอบ)</p>
+  </div>
+
+  <h2>ตัวอย่างประยุกต์</h2>
+  <div class="card">
+    <p><strong>🏢 งานวี:</strong> เอกสาร <code>docs/02-cpt-and-routing.md</code> คือ data model ทั้งหมดที่ทีมส่งมอบ —
+    บทนี้สอนให้วี "อ่านมันออกและตั้งคำถามกลับได้" แทนที่จะรับมาทั้งดุ้น · การเข้าใจว่าทำไม <code>seasons</code> เป็น taxonomy (ทำ term archive Spring/Summer ได้)
+    ไม่ใช่ field คือความต่างระหว่าง "ทำตามเอกสาร" กับ "เข้าใจเอกสาร"</p>
+    <p><strong>🌏 อุตสาหกรรม:</strong> WooCommerce = โครงเดียวกันเป๊ะ: <code>product</code> (CPT) + <code>product_cat</code>/<code>product_tag</code> (taxonomy) + ราคา/SKU (meta field)
+    · Shopify, Magento ก็แยก 3 ชั้นนี้เหมือนกัน — เข้าใจหลักที่ Fujisawa อ่านออกทุก e-commerce platform</p>
+  </div>
+
+  <h2>🧹 Clean Code ประจำ Week 3 — ออกแบบ data model ให้อ่านออก</h2>
+  <div class="card">
+    <h3>1. ตั้งชื่อ slug สื่อความหมาย + มีระบบ</h3>
+    <div class="clean">
+      <div class="bad"><h4>❌ ชื่อมั่ว เดาตระกูลไม่ได้</h4>
+<pre><code>register_post_type('type1', ...);
+register_post_type('shop', ...);
+register_post_type('shop2', ...);
+// shop กับ shop2 ต่างกันยังไง?</code></pre></div>
+      <div class="good"><h4>✅ prefix บอกตระกูล + ชื่อบอกหน้าที่</h4>
+<pre><code>register_post_type('sslc__shop',...); // อาหาร
+register_post_type('ssnb__shop',...); // บาร์
+register_post_type('ssws__shop',...); // ที่พัก
+// เห็นชื่อ = รู้ตระกูลทันที</code></pre></div>
+    </div>
+
+    <h3>2. เลือก taxonomy แทน field เมื่อข้อมูลใช้กรอง</h3>
+    <div class="clean">
+      <div class="bad"><h4>❌ area เป็น ACF select — query ช้า</h4>
+<pre><code>// เก็บย่านเป็น field
+'meta_query' =&gt; [[
+  'key'=&gt;'area','value'=&gt;'enoshima'
+]]  // LIKE บน postmeta = ช้า
+// + ไม่มีหน้า /area/enoshima/</code></pre></div>
+      <div class="good"><h4>✅ area เป็น taxonomy — index เร็ว + archive ฟรี</h4>
+<pre><code>'tax_query' =&gt; [[
+  'taxonomy'=&gt;'ssws__mst_area',
+  'terms'=&gt;'enoshima'
+]]  // ใช้ index = เร็ว
+// + ได้ /area/enoshima/ อัตโนมัติ</code></pre></div>
+    </div>
+    <div class="warn"><strong>กฎทอง:</strong> การตัดสิน CPT/Taxonomy/Field คือการตัดสินใจที่<em>ย้อนกลับยากที่สุด</em>ในโปรเจค —
+    เพราะข้อมูลถูกกรอกเข้าไปแล้วเป็นพันชิ้น การย้ายทีหลังคือ migrate + เสี่ยงข้อมูลหาย · คิดให้จบตั้งแต่พิมพ์เขียว</div>
+  </div>
+
+  <h2>🎯 Mission 3 — DESIGN-ANALYSIS.md + ลิสต์คำถามทีม</h2>
+  <div class="danger" style="margin-bottom:16px">
+    🤖 <strong>กฎ AI สองโหมด:</strong> Mission นี้เป็นงาน<strong>วิเคราะห์/เขียนเอกสาร</strong> — ใช้สมองตัวเองอ่าน data model
+    · ติดตรงไหนขอ hint ได้ แต่ห้ามให้ AI สรุปแทนทั้งหมด (จุดประสงค์คือวี "อ่านออกเอง")
+  </div>
+  <div class="mission">
+    <h3>เป้าหมาย <span class="badge orange">~3-4 ชม.</span></h3>
+    <p>เขียนเอกสารวิเคราะห์ data model ของ Fujisawa ที่<strong>เอาไปใช้ในที่ประชุมทีมจริงได้</strong> — นี่คือจุดที่ความเข้าใจแปลงเป็นมูลค่างาน</p>
+
+    <div class="step"><div class="num">1</div><div>
+      <strong>อ่าน <code>docs/02-cpt-and-routing.md</code> + <code>docs/06-acf-field-reference.md</code></strong> — ของจริงในโฟลเดอร์โปรเจค (read-only)</div></div>
+
+    <div class="step"><div class="num">2</div><div>
+      <strong>สร้าง <code>DESIGN-ANALYSIS.md</code></strong> — ตารางแมป CPT ↔ taxonomy ↔ ACF group ↔ หน้าดีไซน์ (อย่างน้อย 8 CPT หลัก)
+      + คอลัมน์ "เหตุผลที่เป็น CPT/Taxonomy/Field" ของแต่ละตัว (ใช้ต้นไม้ตัดสินใจจากภาพที่ 1)</div></div>
+
+    <div class="step"><div class="num">3</div><div>
+      <strong>เลือก 1 CPT มาวิเคราะห์ลึก</strong> (แนะนำ <code>ssws__shop</code> ที่พัก) — เขียนว่ามันมี field อะไร, taxonomy อะไร,
+      หน้า listing/detail map ไปไฟล์ไหน, has_archive เป็นอะไร → ต้องทำ listing ยังไง</div></div>
+
+    <div class="step"><div class="num">4</div><div>
+      <strong>ลิสต์ "คำถามที่ต้องถามทีม"</strong> — อย่างน้อย 3 ข้อจากปริศนาในบท:
+      ① บทบาท <code>whattosee</code> vs <code>sstr_spot</code> ② ลบ <code>ss_whattosee</code> template ได้ไหม ③ ข้อมูลทดสอบเอามาจากไหน (WXR ว่าง)</div></div>
+
+    <div class="step"><div class="num">5</div><div>
+      <strong>push GitHub</strong> — repo <code>fujisawa-data-model-analysis</code> (⚠️ เอกสารวิเคราะห์ generic — ห้ามแปะข้อมูล/เนื้อหาจริงของบริษัท ใช้ชื่อ CPT ที่เป็นโครงสร้างพอ ไม่ลง content จริง)</div></div>
+  </div>
+
+  <div class="card">
+    <h3>✅ Definition of Done</h3>
+    <ul class="check">
+      <li>DESIGN-ANALYSIS.md มีตารางแมป ≥8 CPT + เหตุผล CPT/Tax/Field ทุกแถว</li>
+      <li>วิเคราะห์ลึก 1 CPT ครบ (field/taxonomy/template/archive)</li>
+      <li>ลิสต์คำถามทีม ≥3 ข้อ — แต่ละข้ออธิบายว่า "ถ้าไม่เคลียร์จะพังยังไง"</li>
+      <li>อธิบายได้ปากเปล่า: ทำไม area เป็น taxonomy ไม่ใช่ field + Quiz ตอบได้</li>
+    </ul>
+  </div>
+
+  <h2>📝 Quiz — ทดสอบความเข้าใจ</h2>
+  <details><summary>ข้อ 1: "ราคาห้องพัก" ควรเป็น CPT, Taxonomy หรือ Field? เพราะอะไร</summary>
+    <p><strong>Field</strong> — เพราะมันเป็นคุณสมบัติเฉพาะตัวของโรงแรมแต่ละแห่ง ไม่ได้ใช้ "จัดกลุ่ม" (ไม่มีใครกรอง "โรงแรมราคา 3,200 บาทพอดี")
+    และไม่มีหน้ารายละเอียดของ "ราคา" เอง · ถ้าอยากกรองเป็น<em>ช่วง</em>ราคา (ถูก/กลาง/แพง) ค่อยเพิ่ม taxonomy "ระดับราคา" แยกต่างหาก</p></details>
+  <details><summary>ข้อ 2: ทำไม "ย่าน (area)" เป็น taxonomy ดีกว่า ACF select field?</summary>
+    <p>เพราะ area ใช้ "กรอง" (โรงแรมทั้งหมดในย่านนี้) + ใช้ซ้ำข้าม CPT — taxonomy ให้ 3 อย่างที่ field ให้ไม่ได้:
+    ① index ทำให้ query เร็ว (field ต้อง meta_query LIKE = ช้า) ② หน้า archive <code>/area/enoshima/</code> ฟรี ③ แก้ term ที่เดียวมีผลทุก CPT ที่ผูก</p></details>
+  <details><summary>ข้อ 3 (security/production): <code>can_export:false</code> ทุก CPT ทำให้ export WXR ว่าง — กระทบการเตรียม sandbox ยังไง และวิธีแก้?</summary>
+    <p>WXR (Tools → Export) จะไม่มีเนื้อหา CPT ติดมา → ถ้าพึ่ง WXR อย่างเดียว sandbox จะไม่มีข้อมูลทดสอบ template ·
+    วิธีแก้: ① DB dump ผ่าน Fujisawa migration system (ได้ครบสุด) ② REST API <code>/wp-json/wp/v2/{cpt}</code> — <strong>แต่ต้องเปิด show_in_rest ที่ field group ก่อน</strong> ไม่งั้น <code>acf:[]</code> ว่าง (Risk R3)
+    ③ WP All Export (CSV) · บทเรียน production: อย่าสมมุติว่า "export = ได้ทุกอย่าง" ต้องรู้ข้อจำกัดของเครื่องมือ</p></details>
+  <details><summary>ข้อ 4: ทำไมการเปลี่ยน slug ของ CPT ใน CPT UI เล่นๆ ถึงอันตราย (เคส ss_whattosee)?</summary>
+    <p>เพราะ slug คือค่าใน <code>post_type</code> ที่ผูกโพสต์ทุกชิ้นเข้ากับ type · เปลี่ยน slug = register type ใหม่ที่ไม่มีโพสต์เดิมผูกอยู่
+    → เนื้อหาเดิมทั้งหมด "หลุด" (ยังอยู่ใน DB แต่ชี้ไป type ที่ไม่มีแล้ว) หน้า 404 ทั้งหมวด · ทางถูก: ต้องติ๊ก "Migrate posts to renamed post type" เสมอ + สำรอง DB ก่อน (Risk R1)</p></details>
+
+  <div class="card" style="border:2px solid var(--brand)">
+    <h3 style="margin-top:0">⏭ สัปดาห์หน้า</h3>
+    <p style="margin:0"><strong>Week 4 — ACF ลึก: 24 Field Groups ⭐:</strong>
+    รู้แล้วว่าอะไรควรเป็น Field — คราวนี้เจาะ ACF เต็ม: field ชนิด <code>qtranslate_*</code> (8 ภาษา), acf-json version control,
+    field GEO ที่ต้องเพิ่ม และ<strong>เริ่มถัก security</strong> — escape ทุก output ตั้งแต่บรรทัดแรกที่แสดง field</p>
+  </div>
+
+  <div class="nav-bottom">
+    <a class="btn ghost" href="../week-02/index.html">← Week 2</a>
+    <a class="btn ghost" href="../index.html">หน้ารวมคอร์ส</a>
+    <span class="btn" style="background:#9ca3af;cursor:default">Week 4 (รอสร้าง) →</span>
+  </div>
+  <footer>PHP Full Stack Track × Fujisawa V2.1 · Week 3 · มาตรฐานบทเรียน 7 ส่วน</footer>
+</div>
+</body>
+</html>

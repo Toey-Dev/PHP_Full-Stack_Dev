@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 6 — WP_Query & The Loop: ดึงข้อมูลมาแสดงเอง</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="crumb"><a href="../index.html">PHP Full Stack Track</a> · Week 6</div>
+    <h1>🔍 WP_Query &amp; The Loop — ดึงข้อมูลมาแสดงเอง</h1>
+    <p>5 สัปดาห์ที่ผ่านมาเข้าใจแล้วว่าข้อมูลเก็บยังไง (wp_posts, postmeta, ACF, 8 ภาษา) —
+    ถึงเวลา<strong>ดึงมันออกมาแสดง</strong> · WP_Query คือเครื่องมือที่ทำให้ "ดีไซน์ที่นิ่ง" กลายเป็น "หน้าเว็บที่ข้อมูลวิ่งมาจาก DB จริง"
+    · บทนี้เริ่ม <strong>Phase 1 ของงาน redesign</strong> — สร้างแถบ Unibar จริง</p>
+    <p style="margin-top:10px;font-size:.9rem;opacity:.85">⏱ เนื้อหา ~2-3 ชม. + Mission ~3-4 ชม. · 🎯 Mission: header.php + parts/unibar.php (แถบส้มรวมเวลาทำการ+ข่าว)</p>
+  </div>
+</header>
+<div class="wrap">
+
+  <div class="card">
+    <h3 style="margin-top:0">🔑 คีย์เวิร์ดภาพจำ</h3>
+    <div class="kw-row">
+      <span class="kw">🔍 WP_Query = SELECT ของ WordPress</span>
+      <span class="kw">🎯 The Loop = เข็มชี้ทีละ post</span>
+      <span class="kw">🏷 tax_query เร็ว (index) · meta_query ช้ากว่า</span>
+      <span class="kw">💥 orderby meta = โพสต์ไม่มี key หลุดหายทั้งชุด</span>
+      <span class="kw">🔄 จบ custom loop ต้อง wp_reset_postdata()</span>
+      <span class="kw">📑 main query = WP จัดให้ · custom query = เราสร้างเอง</span>
+    </div>
+  </div>
+
+  <h2>🧠 แนวคิด & หลักการ</h2>
+  <div class="card">
+    <h3>หลักการ 1: "WP_Query = SELECT ของ WordPress"</h3>
+    <p><strong>เปรียบเปรย:</strong> ถ้าเคยเขียน SQL — <code>WP_Query</code> คือ <code>SELECT ... FROM wp_posts WHERE ... ORDER BY ...</code> ที่ห่อด้วย PHP array
+    ให้เราไม่ต้องเขียน SQL เอง (และปลอดภัยจาก SQL injection เพราะ WP escape ให้) · เปรียบเปรยอีกแบบ: WP_Query = <em>ใบสั่งของที่บรรณารักษ์</em>
+    — เราเขียนว่า "ขอหนังสือหมวดท่องเที่ยว 5 เล่มล่าสุด" แล้วบรรณารักษ์ (WP) ไปหยิบมาจากคลัง (DB) ให้</p>
+    <p>มี 2 ชนิด — ต่างกันตรง "ใครสั่ง":</p>
+    <table>
+      <tr><th></th><th>Main Query</th><th>Custom Query</th></tr>
+      <tr><td>ใครสร้าง</td><td>WP สร้างให้อัตโนมัติจาก URL</td><td>เราเขียน <code>new WP_Query([...])</code> เอง</td></tr>
+      <tr><td>ตัวอย่าง</td><td>เปิด <code>/sightseeing/</code> → WP query สถานที่ทั้งหมดมาให้</td><td>อยากได้ "ข่าว 5 อันล่าสุดขึ้นแบนเนอร์"</td></tr>
+      <tr><td>The Loop</td><td><code>while(have_posts())</code> ตรงๆ</td><td><code>while($q-&gt;have_posts())</code> ผ่านตัวแปร</td></tr>
+    </table>
+
+    <h3>หลักการ 2: The Loop = เข็มชี้ทีละ post</h3>
+    <p><strong>เปรียบเปรย:</strong> The Loop = <em>เข็มเครื่องเล่นแผ่นเสียง</em> · <code>the_post()</code> วางเข็มลงบนโพสต์ปัจจุบัน
+    ทำให้ template tag ทั้งหมด (<code>the_title()</code>, <code>the_field()</code>) รู้ว่า "ตอนนี้กำลังพูดถึงโพสต์ไหน" · วนไปเรื่อยๆ จนหมดแผ่น</p>
+    <p>โยง Week 1: เราเห็น The Loop เล็กสุดไปแล้ว — บทนี้ต่อยอดเป็น custom query ที่กรอง/เรียง/แบ่งหน้าเองได้</p>
+
+    <h3>หลักการ 3: เมื่อไหร่ใช้ tax_query / เมื่อไหร่ meta_query</h3>
+    <p>โยงกลับ Week 3 (ทำไม area เป็น taxonomy):</p>
+    <ul>
+      <li><strong>tax_query</strong> (กรองด้วย taxonomy) — <em>เร็ว</em> เพราะ taxonomy มี index · ใช้เมื่อกรองสิ่งที่เป็น "หมวด/ป้าย" (ประเภท, ย่าน, ฤดู)</li>
+      <li><strong>meta_query</strong> (กรองด้วย ACF field) — <em>ช้ากว่า</em> เพราะ scan postmeta · ใช้เมื่อจำเป็นต้องกรองด้วยคุณสมบัติเฉพาะ (วันหมดอายุ, flag) ที่ไม่เหมาะเป็น taxonomy</li>
+    </ul>
+    <p><strong>หลักคิด:</strong> ออกแบบ data model ให้สิ่งที่ "ใช้กรองบ่อย" เป็น taxonomy ตั้งแต่แรก (Week 3) → query เร็วโดยไม่ต้องพึ่ง meta_query หนักๆ</p>
+  </div>
+
+  <figure class="figure">
+    <svg viewBox="0 0 760 250" xmlns="http://www.w3.org/2000/svg" font-family="Sarabun,sans-serif" role="img" aria-label="WP_Query กับ The Loop">
+      <defs><marker id="d1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#6b7280"/></marker></defs>
+      <rect x="15" y="70" width="180" height="110" rx="10" fill="#e4eff5" stroke="#15679f" stroke-width="2"/>
+      <text x="105" y="96" text-anchor="middle" font-size="12" font-weight="bold" fill="#0c3f5e">📝 ใบสั่ง WP_Query</text>
+      <text x="105" y="120" text-anchor="middle" font-size="10.5" fill="#1f2937">post_type: news</text>
+      <text x="105" y="138" text-anchor="middle" font-size="10.5" fill="#1f2937">meta: emergency</text>
+      <text x="105" y="156" text-anchor="middle" font-size="10.5" fill="#1f2937">จำนวน: 5</text>
+      <text x="105" y="173" text-anchor="middle" font-size="10" fill="#6b7280">เราเขียนเงื่อนไข</text>
+      <rect x="255" y="80" width="150" height="90" rx="10" fill="#fff" stroke="#15679f" stroke-width="2"/>
+      <text x="330" y="108" text-anchor="middle" font-size="12" font-weight="bold" fill="#0c3f5e">🗄 wp_posts</text>
+      <text x="330" y="132" text-anchor="middle" font-size="11" fill="#1f2937">WP แปลงเป็น SQL</text>
+      <text x="330" y="150" text-anchor="middle" font-size="10" fill="#6b7280">ไปหยิบจาก DB</text>
+      <rect x="465" y="70" width="280" height="110" rx="10" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+      <text x="605" y="96" text-anchor="middle" font-size="12" font-weight="bold" fill="#047857">🎯 The Loop (เข็มชี้)</text>
+      <text x="605" y="120" text-anchor="middle" font-size="10.5" fill="#1f2937">while( have_posts() ): the_post();</text>
+      <text x="605" y="140" text-anchor="middle" font-size="10.5" fill="#1f2937">the_title() → ข่าว 1 → ข่าว 2 ...</text>
+      <text x="605" y="162" text-anchor="middle" font-size="10" fill="#dc2626">จบแล้ว → wp_reset_postdata()</text>
+      <line x1="195" y1="125" x2="252" y2="125" stroke="#6b7280" stroke-width="2" marker-end="url(#d1)"/>
+      <line x1="405" y1="125" x2="462" y2="125" stroke="#6b7280" stroke-width="2" marker-end="url(#d1)"/>
+      <text x="380" y="215" text-anchor="middle" font-size="12.5" fill="#1f2937">เขียนใบสั่ง → WP หยิบจาก DB → วนเข็มพิมพ์ทีละอัน — นี่คือทุกหน้า listing/archive ในเว็บ</text>
+    </svg>
+    <figcaption>ภาพที่ 1: วงจร WP_Query → The Loop — ทำงานเหมือนกันหมดตั้งแต่หน้า archive จนถึงแถบข่าว Unibar</figcaption>
+  </figure>
+
+  <h2>ส่วนที่ 1: อ่านโค้ดจริง — <code>df_get_banner_emergency()</code> ทีละส่วน</h2>
+  <div class="card">
+    <p>helper จริงจาก dev-starter (เห็นภาพรวมแล้วใน Week 2) — คราวนี้ผ่าทีละส่วน เพราะมันคือ WP_Query + meta_query ที่ครบเครื่องที่สุดในโปรเจค:</p>
+<pre><code>function df_get_banner_emergency() {
+  $now = current_time('Y-m-d H:i:s');            // 1
+  $q = new WP_Query([
+    'post_type'      =&gt; 'news',                   // 2
+    'posts_per_page' =&gt; 1,                        // 3
+    'meta_query'     =&gt; [
+      'relation' =&gt; 'AND',                        // 4
+      ['key' =&gt; 'display_in_banner', 'value' =&gt; '1'],        // 5
+      ['key' =&gt; 'category', 'value' =&gt; 'emergency'],         // 6
+      ['key' =&gt; 'publish_at', 'value' =&gt; $now,
+       'compare' =&gt; '&lt;=', 'type' =&gt; 'DATETIME'],            // 7
+      ['relation' =&gt; 'OR',                                   // 8
+        ['key' =&gt; 'expire_at', 'value' =&gt; $now,
+         'compare' =&gt; '&gt;=', 'type' =&gt; 'DATETIME'],           // 9
+        ['key' =&gt; 'expire_at', 'compare' =&gt; 'NOT EXISTS'],   // 10
+      ],
+    ],
+  ]);
+  if ($q-&gt;have_posts()) {                         // 11
+    $q-&gt;the_post();
+    $link = get_field('link') ?: get_permalink(); // 12
+    $data = ['text' =&gt; get_the_title(), 'url' =&gt; $link];
+    wp_reset_postdata();                          // 13
+    return $data;
+  }
+  return null;                                    // 14
+}</code></pre>
+    <table>
+      <tr><th>บรรทัด</th><th>ทำไมต้องมี (ไม่ใช่แค่ทำอะไร)</th></tr>
+      <tr><td>1</td><td><code>current_time()</code> ไม่ใช่ <code>date()</code> — เพราะต้องใช้เวลาโซน Asia/Tokyo ตามตั้งค่า WP ไม่ใช่เวลา server (server อาจอยู่คนละ timezone) · เก็บไว้เทียบกับ publish/expire</td></tr>
+      <tr><td>2-3</td><td>query เฉพาะ CPT <code>news</code> · เอาแค่ 1 ข่าว (แบนเนอร์ฉุกเฉินโชว์ทีละอัน)</td></tr>
+      <tr><td>4</td><td><code>'relation' =&gt; 'AND'</code> = เงื่อนไขทุกข้อต้องจริงพร้อมกัน (เหมือน <code>AND</code> ใน SQL)</td></tr>
+      <tr><td>5-6</td><td>กรอง: ต้อง<strong>ติ๊กให้ขึ้นแบนเนอร์</strong> (display_in_banner=1) และ<strong>เป็นข่าวฉุกเฉิน</strong> (category=emergency) — 2 flag ที่ทีมคอนเทนต์คุมเอง</td></tr>
+      <tr><td>7</td><td><code>publish_at &lt;= now</code> = "ถึงเวลาเผยแพร่แล้ว" · <code>type=DATETIME</code> สำคัญมาก — บอก WP ให้เทียบแบบวันเวลา ไม่ใช่ string (ไม่งั้น "9" &gt; "10" เพราะเทียบตัวอักษร)</td></tr>
+      <tr><td>8-10</td><td>ก้อน OR ซ้อนใน AND: "ยังไม่หมดอายุ (<code>expire_at &gt;= now</code>) <strong>หรือ</strong> ไม่เคยตั้งวันหมดอายุ (<code>NOT EXISTS</code>)" — <code>NOT EXISTS</code> คือกุญแจ: ข่าวที่ไม่กรอก expire_at ต้องไม่ถูกคัดทิ้ง (ไม่มีวันหมด = แสดงตลอด)</td></tr>
+      <tr><td>11</td><td>เช็คว่ามีข่าวเข้าเงื่อนไขไหม ก่อนเข้า loop — guard clause (Week 1)</td></tr>
+      <tr><td>12</td><td><code>?:</code> (Elvis operator) — ถ้า field <code>link</code> ว่างให้ใช้ permalink ของข่าวแทน · เขียนสั้นแทน if-else</td></tr>
+      <tr><td>13</td><td><strong>🔴 หัวใจ:</strong> <code>wp_reset_postdata()</code> — คืนเข็มกลับให้ main query · <strong>ลืมบรรทัดนี้ = template tag หลังจากนี้ชี้ post ผิดตัว</strong> (ดูส่วนที่ 2)</td></tr>
+      <tr><td>14</td><td>ไม่มีข่าวฉุกเฉิน → คืน null → header.php เอาไปเช็คแล้วไม่แสดงแถบ (ไม่ output อะไรเลย ดีกว่าแถบเปล่า)</td></tr>
+    </table>
+  </div>
+
+  <h2>ส่วนที่ 2: 💥 กับดัก 2 ตัวที่ต้องเจอกับตา</h2>
+  <div class="card">
+    <h3>กับดัก 1: ลืม <code>wp_reset_postdata()</code> — เข็มค้างผิดที่</h3>
+    <p><strong>เปรียบเปรย:</strong> custom query = ยืมเข็มเครื่องเล่นไปเล่นแผ่นอื่น · ถ้าเล่นเสร็จไม่คืนเข็มกลับที่เดิม
+    แผ่นหลัก (main query) จะเล่นต่อจากตำแหน่งผิด · ผลจริง: <code>the_title()</code> หลัง loop กลายเป็นชื่อข่าวสุดท้ายที่ query ไม่ใช่โพสต์ของหน้านั้น</p>
+    <div class="danger"><strong>บั๊กคลาสสิกที่หายากสุดใน WP:</strong> หน้าแสดงชื่อผิด แต่โค้ด template tag ดู "ถูก" ทุกอย่าง — เพราะต้นเหตุอยู่ที่ custom loop ก่อนหน้าที่ลืม reset
+    · จำ: <strong>ทุก custom <code>WP_Query</code> ที่เข้า loop ต้องจบด้วย <code>wp_reset_postdata()</code></strong> เสมอ</div>
+
+    <h3>กับดัก 2: <code>orderby</code> meta ทำโพสต์ที่ไม่มี key หลุดหายทั้งชุด</h3>
+    <p>เอกสาร docs/02 §6b มี query แบนเนอร์ที่<em>ตั้งใจ</em>เรียงตาม <code>is_pinned</code> (ปักหมุดขึ้นก่อน):</p>
+<pre><code>$q = new WP_Query([
+  'post_type' =&gt; 'news',
+  'meta_query' =&gt; [ /* ...เงื่อนไขกรอง... */ ],
+  'meta_key'  =&gt; 'is_pinned',                    // ⚠️ จุดกับดัก
+  'orderby'   =&gt; ['meta_value_num' =&gt; 'DESC', 'date' =&gt; 'DESC'],
+]);</code></pre>
+    <div class="danger">
+      <p><strong>ปัญหา:</strong> การใส่ <code>'meta_key' =&gt; 'is_pinned'</code> เพื่อ orderby ทำให้ WP <strong>INNER JOIN</strong> ตาราง postmeta ด้วย key นี้ —
+      แปลว่า<strong>ข่าวที่ไม่เคยเซฟค่า <code>is_pinned</code> (เช่น ข่าวเก่าที่สร้างก่อนเพิ่ม field นี้) จะหลุดจากผลลัพธ์ทั้งหมด</strong>
+      → แบนเนอร์ว่างเปล่าทั้งที่มีข่าวฉุกเฉินอยู่จริง!</p>
+      <p><strong>ทำไมเงียบ:</strong> ไม่มี error — แค่ query คืนน้อยกว่าที่ควร · dev ที่ไม่รู้กลไกนี้จะงงว่า "ข่าวหายไปไหน ทั้งที่กรอกแล้ว"</p>
+      <p><strong>วิธีแก้:</strong> ① ตั้ง ACF ให้ <code>is_pinned</code> มี <em>default value</em> (0) เสมอ → ทุกโพสต์มี key = ไม่มีใครหลุด · หรือ
+      ② ใช้ named meta_query clause + <code>'orderby' =&gt; ['clause_name' =&gt; 'DESC']</code> ที่ WP ทำ LEFT JOIN (โพสต์ไม่มี key ไม่หลุด) · แนะนำวิธี ① เพราะเข้าใจง่ายและกันที่ต้นเหตุ</p>
+    </div>
+  </div>
+
+  <h2>ส่วนที่ 3: listing สำหรับ CPT ที่ <code>has_archive:false</code></h2>
+  <div class="card">
+    <p>โยง Week 3: Fujisawa มี 14 CPT ที่ <code>has_archive:false</code> = ไม่มีหน้ารวมอัตโนมัติ · ทำหน้า listing เองด้วย custom WP_Query + pagination:</p>
+<pre><code>$paged = get_query_var('paged') ?: 1;            // 1
+$q = new WP_Query([
+  'post_type'      =&gt; 'ssws__shop',              // 2 ที่พัก
+  'posts_per_page' =&gt; 10,
+  'paged'          =&gt; $paged,                     // 3
+  'meta_query'     =&gt; [['key'=&gt;'ssws__shop__flag','value'=&gt;'1']], // 4 กรอง flag!
+]);
+while ($q-&gt;have_posts()): $q-&gt;the_post();
+  get_template_part('template-parts/card-hotel'); // 5
+endwhile;
+wp_pagenavi(['query' =&gt; $q]);                     // 6
+wp_reset_postdata();                              // 7</code></pre>
+    <table>
+      <tr><th>บรรทัด</th><th>ทำไมต้องมี</th></tr>
+      <tr><td>1,3</td><td>อ่านเลขหน้าปัจจุบันจาก URL แล้วส่งให้ query — ขาด <code>paged</code> = ทุกหน้าแสดงชุดเดิม (pagination พัง)</td></tr>
+      <tr><td>4</td><td><strong>กรอง flag เสมอ</strong> (Week 3!) — ไม่งั้นที่พักที่ทีมปิดไว้โผล่บนเว็บ</td></tr>
+      <tr><td>5</td><td><code>get_template_part()</code> = แยกการ์ดออกเป็นไฟล์ reuse ได้ — ไม่ก๊อป markup ซ้ำ (Clean Code)</td></tr>
+      <tr><td>6</td><td><code>wp_pagenavi()</code> = ปลั๊กอินทำเลขหน้า 1 2 3 · ต้องส่ง <code>$q</code> เพราะเป็น custom query ไม่ใช่ main</td></tr>
+      <tr><td>7</td><td>reset เข็ม (กับดัก 1!)</td></tr>
+    </table>
+  </div>
+
+  <h2>ตัวอย่างประยุกต์</h2>
+  <div class="card">
+    <p><strong>🏢 งานวี:</strong> แถบ Unibar (docs/04) คือ WP_Query จริง 2 ชุด: แผงเวลาทำการ (loop <code>whattosee</code> + ACF opening_hours)
+    และแผงข่าว (query <code>news</code> 5 อันล่าสุด) + โหมดฉุกเฉิน (<code>df_get_banner_emergency()</code>) · Mission สัปดาห์นี้สร้างมันจริง = Phase 1 เริ่มเดิน</p>
+    <p><strong>🌏 อุตสาหกรรม:</strong> ทุกหน้า "รายการ" ที่เห็นบนเว็บ (ฟีดข่าว, รายการสินค้า, ผลค้นหา) = query + loop แบบนี้ทั้งนั้น ·
+    กับดัก "orderby field แล้วข้อมูลหาย" เทียบได้กับ SQL <code>INNER JOIN</code> ที่กรองแถวหายโดยไม่ตั้งใจ — บั๊กที่ backend dev ทุกคนเคยโดน</p>
+  </div>
+
+  <h2>🧹 Clean Code ประจำ Week 6 — เขียน query/loop ให้สะอาด</h2>
+  <div class="card">
+    <h3>1. แยก query ออกจาก markup (logic ไม่ปนกับหน้าตา)</h3>
+    <div class="clean">
+      <div class="bad"><h4>❌ query ปนกลาง HTML — อ่านยาก reuse ไม่ได้</h4>
+<pre><code>&lt;div class="list"&gt;
+&lt;?php $q = new WP_Query([...50 บรรทัด...]);
+while(...): the_post(); ?&gt;
+  &lt;div&gt;...markup...&lt;/div&gt;
+&lt;?php endwhile; ?&gt;
+&lt;/div&gt;</code></pre></div>
+      <div class="good"><h4>✅ query ข้างบน · markup ใช้ template part</h4>
+<pre><code>&lt;?php $hotels = ssws_get_hotels($paged); ?&gt;
+&lt;div class="list"&gt;
+&lt;?php while($hotels-&gt;have_posts()):
+  $hotels-&gt;the_post();
+  get_template_part('parts/card-hotel');
+endwhile; wp_reset_postdata(); ?&gt;
+&lt;/div&gt;</code></pre></div>
+    </div>
+
+    <h3>2. wp_reset_postdata() ติดคู่ custom loop เสมอ (มือจำ)</h3>
+    <div class="clean">
+      <div class="bad"><h4>❌ ลืม reset — บั๊กเข็มค้าง</h4>
+<pre><code>while($q-&gt;have_posts()): $q-&gt;the_post();
+  the_title();
+endwhile;
+// จบเลย → the_title() ถัดไปเพี้ยน</code></pre></div>
+      <div class="good"><h4>✅ เขียน reset พร้อม loop ทันที</h4>
+<pre><code>while($q-&gt;have_posts()): $q-&gt;the_post();
+  the_title();
+endwhile;
+wp_reset_postdata();   // พิมพ์คู่กันเสมอ</code></pre></div>
+    </div>
+    <div class="warn"><strong>กฎทอง:</strong> ทุกครั้งที่พิมพ์ <code>new WP_Query</code> ให้พิมพ์ <code>wp_reset_postdata()</code> ต่อท้ายทันทีก่อนเขียน loop ตรงกลาง —
+    ให้มันเป็นคู่ที่แยกกันไม่ได้ในนิสัย เหมือน <code>{ }</code> ที่เปิดต้องปิด</div>
+  </div>
+
+  <h2>🎯 Mission 6 — header.php + parts/unibar.php (Phase 1 เริ่ม!)</h2>
+  <div class="danger" style="margin-bottom:16px">
+    🤖 <strong>กฎ AI สองโหมด:</strong> ปิด AI เขียนมือ · ติดเกิน 20 นาทีขอ hint · ทำบน sandbox
+  </div>
+  <div class="mission">
+    <h3>เป้าหมาย <span class="badge orange">~3-4 ชม.</span></h3>
+    <p>สร้างแถบ Unibar จริงตามสเปก docs/04 — งานชิ้นแรกของ Phase 1 (Core templates) ที่รวม WP_Query + The Loop + escape + qTranslate ทุกอย่างที่เรียนมา</p>
+
+    <div class="step"><div class="num">1</div><div>
+      <strong>เตรียมข้อมูลทดสอบ</strong> — สร้างข่าว (<code>news</code>) 4-5 อันบน sandbox ตั้ง field: <code>category</code> (มี emergency 1 อัน), <code>display_in_banner</code>, <code>publish_at</code>, <code>expire_at</code> (บางอันเว้นว่าง)</div></div>
+
+    <div class="step"><div class="num">2</div><div>
+      <strong>เขียน <code>parts/unibar.php</code></strong> — query ข่าว 5 อันล่าสุดที่ <code>display_in_banner=1</code> · loop แสดง headline (escape + ผ่าน qTranslate)
+      · <strong>ระวังกับดัก orderby meta</strong> — ถ้าเรียงตาม is_pinned ต้องกันโพสต์หลุด (ตั้ง default หรือ named clause)</div></div>
+
+    <div class="step"><div class="num">3</div><div>
+      <strong>โหมดฉุกเฉิน (server-side)</strong> — เรียก <code>df_get_banner_emergency()</code> · ถ้ามีข่าว emergency → เติม class <code>is-emergency</code> ตอน render (ไม่รอ JS)
+      · ทดสอบ: มีข่าว emergency → แถบแดง / ไม่มี → แถบปกติ</div></div>
+
+    <div class="step"><div class="num">4</div><div>
+      <strong>ทดสอบกับดักด้วยตัวเอง</strong> — ① ลบ <code>wp_reset_postdata()</code> ออกดู title หน้าเพี้ยน แล้วใส่กลับ
+      ② สร้างข่าวที่ไม่ตั้ง expire_at → ต้องยังแสดง (NOT EXISTS ทำงาน) · เขียนผลใส่ README</div></div>
+
+    <div class="step"><div class="num">5</div><div>
+      <strong>commit + push</strong> — repo generic <code>wp-query-unibar-lab</code> (ข้อมูล/ชื่อสร้างเอง ไม่ใช่ของบริษัท)
+      · README: อธิบาย meta_query แต่ละเงื่อนไข + กับดัก 2 ตัวที่เจอ + AI Usage</div></div>
+  </div>
+
+  <div class="card">
+    <h3>✅ Definition of Done</h3>
+    <ul class="check">
+      <li>Unibar แสดง headline ข่าวจาก DB จริง (แก้ข่าวใน admin → แถบเปลี่ยน) · escape + qTranslate ครบ</li>
+      <li>โหมด emergency: ตั้งข่าว emergency แล้วแถบแดงเด้ง / ไม่มี → ปกติ (ตัดสินฝั่ง server ไม่ใช่ JS)</li>
+      <li>ข่าวที่ไม่ตั้ง expire_at ยังแสดง (พิสูจน์ NOT EXISTS) · ทดสอบ reset postdata แล้วเข้าใจผล</li>
+      <li>ไม่ตกหลุม orderby meta (ข่าวไม่หายเพราะไม่มี is_pinned) · README + Quiz ครบ</li>
+    </ul>
+  </div>
+
+  <h2>📝 Quiz — ทดสอบความเข้าใจ</h2>
+  <details><summary>ข้อ 1: <code>the_title()</code> หลัง custom loop แสดงชื่อผิด (เป็นชื่อข่าวสุดท้ายที่ query) — เกิดจากอะไร แก้ยังไง?</summary>
+    <p>ลืม <code>wp_reset_postdata()</code> หลัง custom loop — เข็ม (global <code>$post</code>) ค้างอยู่ที่โพสต์สุดท้ายของ custom query ไม่ถูกคืนให้ main query
+    · แก้: เรียก <code>wp_reset_postdata()</code> ทันทีหลัง <code>endwhile</code> ของทุก custom WP_Query ที่เข้า loop</p></details>
+  <details><summary>ข้อ 2: ทำไม tax_query เร็วกว่า meta_query? แล้วควรออกแบบ data model ยังไงให้ query เร็ว?</summary>
+    <p>taxonomy มี index ในตาราง terms/term_relationships → lookup เร็ว · meta_query ต้อง scan postmeta ที่ไม่ได้ index มาเพื่อการนี้ → ช้ากว่าเมื่อข้อมูลโต ·
+    ออกแบบให้ "สิ่งที่ใช้กรองบ่อย" (ประเภท ย่าน ฤดู) เป็น taxonomy ตั้งแต่ Week 3 → query เร็วโดยไม่ต้องพึ่ง meta_query หนัก</p></details>
+  <details><summary>ข้อ 3 (security/production): query แบนเนอร์ตั้ง orderby ตาม is_pinned แล้วข่าวฉุกเฉินบางอันหายไป — อธิบายกลไก และวิธีแก้</summary>
+    <p>การใส่ <code>meta_key</code> เพื่อ orderby ทำให้ WP INNER JOIN postmeta ด้วย key นั้น → โพสต์ที่ไม่เคยเซฟ <code>is_pinned</code> (ข่าวเก่า/สร้างก่อนมี field) ถูกตัดออกทั้งหมด
+    → แบนเนอร์อาจว่างทั้งที่มีข่าวด่วน = ปัญหา production ร้ายแรง (ข้อมูลฉุกเฉินไม่ถึงผู้ใช้) · แก้: ตั้ง ACF default value ให้ is_pinned มีค่าเสมอ หรือใช้ named meta_query clause ที่ LEFT JOIN
+    · บทเรียน: orderby บน optional field ต้องระวัง JOIN ที่ซ่อนอยู่</p></details>
+  <details><summary>ข้อ 4: ในโค้ด df_get_banner_emergency ทำไมต้องมีเงื่อนไข <code>expire_at NOT EXISTS</code> ใน OR ด้วย?</summary>
+    <p>เพราะข่าวที่ไม่กรอกวันหมดอายุ (ตั้งใจให้แสดงไม่มีกำหนด) จะไม่มี key <code>expire_at</code> เลย · ถ้ามีแค่เงื่อนไข <code>expire_at &gt;= now</code> ข่าวพวกนี้จะไม่เข้าเงื่อนไข = หลุดหาย
+    · <code>NOT EXISTS</code> ครอบคลุมเคส "ไม่มีวันหมด = แสดงตลอด" · หลักคิด: เขียน query ต้องคิดถึง "โพสต์ที่ field ว่าง" เสมอ (โยงกับดัก orderby ข้อ 3 — ธีมเดียวกัน)</p></details>
+
+  <div class="card" style="border:2px solid var(--brand)">
+    <h3 style="margin-top:0">⏭ สัปดาห์หน้า</h3>
+    <p style="margin:0"><strong>Week 7 — อ่าน &amp; Refactor Theme เก่า ⭐⭐ (หัวใจงาน redesign):</strong>
+    มีเครื่องมือครบแล้ว (CPT, ACF, qTranslate, WP_Query) — คราวนี้เปิดธีม <code>fujisawa</code> จริง (StanleyWP/Bootstrap 4)
+    เรียนวิธี "อ่านโค้ดคนอื่น + แก้ของเดิม" อะไร reuse อะไรรื้อ · Mission: <code>single-whattosee.php</code> เวอร์ชันจริง — แม่แบบของทุกหน้า</p>
+  </div>
+
+  <div class="nav-bottom">
+    <a class="btn ghost" href="../week-05/index.html">← Week 5</a>
+    <a class="btn ghost" href="../index.html">หน้ารวมคอร์ส</a>
+    <span class="btn" style="background:#9ca3af;cursor:default">Week 7 (รอสร้าง) →</span>
+  </div>
+  <footer>PHP Full Stack Track × Fujisawa V2.1 · Week 6 · มาตรฐานบทเรียน 7 ส่วน</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 5 — qTranslate-XT ถึงแก่น: 8 ภาษาในช่องเดียว</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="crumb"><a href="../index.html">PHP Full Stack Track</a> · Week 5</div>
+    <h1>🌐 qTranslate-XT ถึงแก่น — 8 ภาษาในช่องเดียว</h1>
+    <p>เว็บ Fujisawa เป็นเว็บท่องเที่ยวที่ต้องรองรับนักท่องเที่ยว 8 ภาษา — ทุก field ที่ทีมคอนเทนต์กรอกเก็บ 8 ภาษาไว้ในช่องเดียว
+    แล้วแสดงภาษาที่ถูกต้องตาม URL · บทนี้เจาะว่ากลไกนี้ทำงานยังไง และปิดท้ายด้วย<strong>บั๊กจริงที่รอวีแก้อยู่ในธีม</strong> — งาน MR ชิ้นแรกที่เข้า GitLab ได้จริง</p>
+    <p style="margin-top:10px;font-size:.9rem;opacity:.85">⏱ เนื้อหา ~2-3 ชม. + Mission ~3-4 ชม. · 🎯 Mission: แก้ lang_label() ให้ครบ 8 ภาษา (งานจริงชิ้นแรก)</p>
+  </div>
+</header>
+<div class="wrap">
+
+  <div class="card">
+    <h3 style="margin-top:0">🔑 คีย์เวิร์ดภาพจำ</h3>
+    <div class="kw-row">
+      <span class="kw">🗄 8 ภาษาในช่องเดียว = ลิ้นชักลับหลายชั้นในกล่องเดียว</span>
+      <span class="kw">✂️ filter = ล่ามที่ตัดเฉพาะภาษาที่ขอ ตอน render</span>
+      <span class="kw">🏷 [:th]…[:en]… = ป้ายกำกับภาษาในข้อความ</span>
+      <span class="kw">🚨 เห็น [:th] ดิบบนหน้าเว็บ = ลืมผ่าน filter</span>
+      <span class="kw">🗺 /th/ ใน URL = ป้ายบอกล่ามว่าจะพูดภาษาไหน</span>
+      <span class="kw">🧩 helper ต้อง sync ครบทุกภาษา (ขาด 1 = ภาษานั้นพัง)</span>
+    </div>
+  </div>
+
+  <h2>🧠 แนวคิด & หลักการ</h2>
+  <div class="card">
+    <h3>หลักการ 1: เว็บหลายภาษ มี 2 สถาปัตยกรรม — Fujisawa เลือกแบบ "รวมช่องเดียว"</h3>
+    <p><strong>ปัญหาที่มันแก้:</strong> เว็บท่องเที่ยวต้องพูดกับนักท่องเที่ยวหลายชาติ — สถานที่ 1 แห่งต้องมีคำอธิบาย 8 ภาษา
+    แต่มันคือ<em>สถานที่เดียวกัน</em> (พิกัดเดียว รูปเดียว เวลาเปิดเดียว) · จะเก็บ 8 ภาษายังไงไม่ให้ข้อมูลซ้ำซ้อน?</p>
+    <table>
+      <tr><th></th><th>qTranslate-XT (Fujisawa ใช้)</th><th>WPML / Polylang</th></tr>
+      <tr><td>วิธีเก็บ</td><td>1 โพสต์ · ทุกภาษาในช่องเดียว <code>[:en]…[:th]…</code></td><td>แยกโพสต์ต่อภาษา (8 ภาษา = 8 โพสต์ผูกกัน)</td></tr>
+      <tr><td>ข้อดี</td><td>พิกัด/รูป/meta ไม่ซ้ำ · เพิ่มภาษาใหม่ไม่ต้องสร้างโพสต์ใหม่</td><td>แยกชัด · แต่ละภาษาจัดการอิสระ · scale ดีกว่า</td></tr>
+      <tr><td>ข้อเสีย</td><td>ช่องข้อมูลรก · พึ่ง filter ตัดภาษา (ลืม = เห็นแท็กดิบ)</td><td>ข้อมูล meta ซ้ำ 8 ชุด · จัดการเยอะกว่า</td></tr>
+    </table>
+    <p><strong>เปรียบเปรย:</strong> qTranslate = <em>กล่องที่มีลิ้นชักลับซ้อนกัน 8 ชั้น</em> เปิดจากข้างนอกเห็นเป็นกล่องเดียว
+    แต่มีล่าม (filter) ยืนอยู่คอยดึงเฉพาะลิ้นชักภาษาที่ผู้ชมขอออกมา · WPML = <em>ตู้ 8 ใบเรียงกัน</em> แต่ละใบคือภาษาหนึ่ง</p>
+
+    <h3>หลักการ 2: ข้อมูลถูกเก็บ "รวม" แต่แสดง "แยก" ด้วย filter</h3>
+    <p>นี่คือหัวใจ — ข้อมูลใน DB หน้าตาแบบนี้ (ช่องเดียว):</p>
+<pre><code>[:en]Enoshima Sea Candle[:th]ประภาคารเอโนชิมะ[:ja]江の島シーキャンドル[:]</code></pre>
+    <p>แต่คนเปิดหน้า <code>/th/</code> เห็นแค่ "ประภาคารเอโนชิมะ" — เพราะ qTranslate เสียบ <strong>filter</strong> (จำ Week 1: filter = รับค่ามาแปลงแล้วคืน)
+    ที่ <code>the_title</code>, <code>the_content</code> ฯลฯ คอยตัดเฉพาะภาษาที่ URL ขอออกมาก่อนแสดง · เชื่อมกลับ Week 4: field ชนิด <code>qtranslate_*</code> ก็เก็บรูปแบบนี้ และ <code>get_field()</code> ผ่าน filter เดียวกัน</p>
+
+    <h3>หลักการ 3: เมื่อไหร่ข้อมูลผ่าน filter อัตโนมัติ / เมื่อไหร่ต้องจัดการเอง</h3>
+    <ul>
+      <li><strong>ผ่านอัตโนมัติ:</strong> <code>the_title()</code>, <code>the_content()</code>, <code>the_field()</code>, <code>get_field()</code> — qTranslate เสียบ filter ไว้ให้แล้ว</li>
+      <li><strong>ต้องจัดการเอง:</strong> เวลาเอาข้อความหลายภาษาไปใช้นอกเส้นทางปกติ (เช่น สร้าง JSON, ส่ง JS, ตัวแปรที่ประกอบเอง) — ต้องเรียก <code>qtranxf_use_language($lang, $text)</code> ตัดภาษาเองก่อน</li>
+    </ul>
+  </div>
+
+  <figure class="figure">
+    <svg viewBox="0 0 760 250" xmlns="http://www.w3.org/2000/svg" font-family="Sarabun,sans-serif" role="img" aria-label="filter ตัดภาษาตาม URL">
+      <defs><marker id="c1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#6b7280"/></marker></defs>
+      <rect x="15" y="80" width="215" height="90" rx="10" fill="#fff" stroke="#15679f" stroke-width="2"/>
+      <text x="122" y="104" text-anchor="middle" font-size="12" font-weight="bold" fill="#0c3f5e">🗄 ช่องเดียวใน DB</text>
+      <text x="122" y="128" text-anchor="middle" font-size="10.5" fill="#1f2937">[:en]Sea Candle</text>
+      <text x="122" y="145" text-anchor="middle" font-size="10.5" fill="#1f2937">[:th]ประภาคาร[:ja]…[:]</text>
+      <text x="122" y="162" text-anchor="middle" font-size="10" fill="#6b7280">8 ภาษาซ้อนกัน</text>
+      <rect x="300" y="70" width="160" height="110" rx="10" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+      <text x="380" y="96" text-anchor="middle" font-size="12" font-weight="bold" fill="#92400e">✂️ filter (ล่าม)</text>
+      <text x="380" y="120" text-anchor="middle" font-size="11" fill="#1f2937">อ่าน /th/ จาก URL</text>
+      <text x="380" y="140" text-anchor="middle" font-size="11" fill="#1f2937">→ ตัดเฉพาะ [:th]</text>
+      <text x="380" y="162" text-anchor="middle" font-size="10" fill="#6b7280">the_title/get_field</text>
+      <rect x="530" y="45" width="105" height="70" rx="10" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+      <text x="582" y="75" text-anchor="middle" font-size="11" font-weight="bold" fill="#047857">🌐 /th/</text>
+      <text x="582" y="96" text-anchor="middle" font-size="11" fill="#1f2937">ประภาคาร</text>
+      <rect x="530" y="130" width="105" height="70" rx="10" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+      <text x="582" y="160" text-anchor="middle" font-size="11" font-weight="bold" fill="#047857">🌐 /en/</text>
+      <text x="582" y="181" text-anchor="middle" font-size="11" fill="#1f2937">Sea Candle</text>
+      <line x1="230" y1="122" x2="297" y2="122" stroke="#6b7280" stroke-width="2" marker-end="url(#c1)"/>
+      <line x1="460" y1="110" x2="527" y2="85" stroke="#6b7280" stroke-width="2" marker-end="url(#c1)"/>
+      <line x1="460" y1="140" x2="527" y2="165" stroke="#6b7280" stroke-width="2" marker-end="url(#c1)"/>
+      <text x="380" y="222" text-anchor="middle" font-size="12" fill="#dc2626" font-weight="bold">ถ้าข้ามล่าม (ไม่ผ่าน filter) → ผู้ใช้เห็น "[:en]Sea Candle[:th]ประภาคาร[:]" ดิบๆ ทั้งก้อน</text>
+    </svg>
+    <figcaption>ภาพที่ 1: ข้อมูลเก็บรวม 8 ภาษา · filter ตัดเฉพาะภาษาที่ URL ขอตอน render — ข้ามด่านนี้เมื่อไหร่ = แท็กดิบโผล่</figcaption>
+  </figure>
+
+  <h2>ส่วนที่ 1: 3 helper ที่ต้องรู้จัก</h2>
+  <div class="card">
+    <p>ธีม fujisawa reuse helper ของ qTranslate เหล่านี้ทุกที่ที่แสดงข้อความหลายภาษา (จาก docs/07 §4):</p>
+    <table>
+      <tr><th>helper</th><th>ทำอะไร</th><th>ใช้เมื่อไหร่</th></tr>
+      <tr><td><code>qtranxf_getLanguage()</code></td><td>คืนโค้ดภาษาปัจจุบัน (เช่น <code>'th'</code>)</td><td>อยากรู้ว่าตอนนี้หน้าไหน ภาษาอะไร</td></tr>
+      <tr><td><code>qtranxf_use_language($lang, $text)</code></td><td>ตัดเฉพาะภาษา <code>$lang</code> ออกจากข้อความหลายภาษา</td><td>ประกอบข้อความเอง / นอกเส้นทาง filter ปกติ</td></tr>
+      <tr><td><code>lang_label($lang)</code></td><td>แปลงโค้ดภาษา → ชื่อภาษา (<code>'th'</code> → "ภาษาไทย")</td><td>ทำปุ่มสลับภาษา / label · <strong>ตัวที่มีบั๊ก!</strong></td></tr>
+    </table>
+    <div class="tip"><strong>โยง Week 1:</strong> helper พวกนี้คือ "ฟังก์ชันที่ปลั๊กอินประกาศไว้ใน global" — เราเรียกใช้ได้เพราะ qTranslate โหลดก่อนธีม
+    (เหมือน <code>get_field()</code> ของ ACF) · ถ้าปิดปลั๊กอิน ฟังก์ชันหาย = เว็บล่ม → มืออาชีพจึงมักครอบ <code>if (function_exists(...))</code></div>
+  </div>
+
+  <h2>ส่วนที่ 2: 🐞 บั๊กจริงในธีม — <code>lang_label()</code> out-of-sync (Risk R8)</h2>
+  <div class="card">
+    <p>นี่คือบั๊กจริงที่เอกสารส่งมอบระบุไว้ว่า "รอ dev แก้" — และจะเป็น Mission ของวี · ต้นเหตุคือ<strong>ข้อมูล 2 แหล่งไม่ตรงกัน</strong>:</p>
+    <table>
+      <tr><th>แหล่ง</th><th>ภาษาที่มี</th></tr>
+      <tr><td>qTranslate UI จริง (ภาษา active)</td><td><code>en · th · tw · cn · kr · fr · es · <strong>vn</strong></code> (8 ภาษา · มี vn)</td></tr>
+      <tr><td>helper <code>lang_label()</code> ในธีม</td><td>มี <code><strong>ja</strong></code> (日本語) · <strong>แต่ไม่มี <code>vn</code></strong></td></tr>
+    </table>
+    <p><strong>เปรียบเปรย:</strong> เหมือนเมนูอาหารหน้าร้านเขียนว่า "มีเวียดนาม" แต่ในครัวไม่มีสูตรเวียดนาม กลับมีสูตรญี่ปุ่นที่เอาออกจากเมนูไปแล้ว
+    — ลูกค้าเวียดนามสั่งแล้วได้จานเปล่า</p>
+    <div class="danger"><strong>💥 ผลของบั๊ก:</strong> เมื่อผู้ใช้เปิดภาษาเวียดนาม (<code>/vn/</code>) helper <code>lang_label('vn')</code> หาไม่เจอ →
+    คืนค่าว่าง/ผิด → ปุ่มสลับภาษาแสดงเพี้ยน หรือ label หาย · และภาษา <code>ja</code> ที่ helper ยังมีอยู่ก็ไม่มีแท็บใน UI แล้ว = โค้ดตายที่รอลบ
+    <br><strong>วิธีแก้ (= Mission):</strong> เติม <code>vn</code> เข้า <code>lang_label()</code> + ยืนยันกับทีมว่า <code>ja</code> ยังต้องรองรับไหม (base ที่ไม่โชว์แท็บ หรือเลิกแล้ว) → ถ้าเลิกก็ลบออก</div>
+  </div>
+
+  <div class="card">
+    <h3>อ่านโค้ด helper ทีละส่วน (สมมุติโครงตามที่เอกสารบรรยาย)</h3>
+<pre><code>function lang_label( $lang ) {                 // 1
+    $labels = [                                 // 2
+        'en' =&gt; 'English',
+        'th' =&gt; 'ภาษาไทย',
+        'ja' =&gt; '日本語',        // 3 ← ไม่มีแท็บใน UI แล้ว
+        // ... tw, cn, kr, fr, es ...
+        // 4 ← ไม่มี 'vn' = เวียดนามพัง
+    ];
+    return $labels[ $lang ] ?? '';              // 5
+}</code></pre>
+    <table>
+      <tr><th>บรรทัด</th><th>ทำไมต้องมี / ปัญหา</th></tr>
+      <tr><td>1</td><td>รับโค้ดภาษาเข้ามา (เช่น <code>'vn'</code>) — helper นี้ถูกเรียกทุกที่ที่ต้องแสดงชื่อภาษา (ปุ่มสลับภาษา, footer)</td></tr>
+      <tr><td>2</td><td>ตาราง map โค้ด→ชื่อ · <strong>นี่คือแหล่งความจริงที่ต้อง sync กับ qTranslate UI</strong> — แต่มันไม่ตรง</td></tr>
+      <tr><td>3</td><td><code>ja</code> ยังอยู่ทั้งที่ UI ไม่มีแท็บ ja แล้ว = โค้ดตาย (dead code) รอยืนยันเพื่อลบ</td></tr>
+      <tr><td>4</td><td><strong>ขาด <code>vn</code></strong> — ภาษาที่ 8 ที่ active จริง ตกหล่น = ต้นตอบั๊ก</td></tr>
+      <tr><td>5</td><td><code>?? ''</code> (null coalescing) — ถ้าหา key ไม่เจอคืนค่าว่าง · นี่คือเหตุผลที่บั๊ก "เงียบ" ไม่ error แค่ label หาย ทำให้หายากถ้าไม่รู้ว่าต้องดูตรงไหน</td></tr>
+    </table>
+  </div>
+
+  <h2>ตัวอย่างประยุกต์</h2>
+  <div class="card">
+    <p><strong>🏢 งานวี:</strong> การแก้ <code>lang_label()</code> คืองาน redesign จริงชิ้นแรกที่<em>เข้า GitLab MR ได้</em> —
+    เล็ก ปลอดภัย ทดสอบง่าย แต่มีคุณค่าจริง (แก้ภาษาเวียดนามที่พังอยู่) · เป็นจุดที่ความเข้าใจ qTranslate แปลงเป็น commit ที่ทีม review แล้ว merge ได้</p>
+    <p><strong>🌏 อุตสาหกรรม:</strong> ปัญหา "แหล่งความจริง 2 ที่ไม่ sync กัน" (config ในโค้ด vs config ในระบบ) เป็นบั๊กคลาสสิกทุกวงการ —
+    เช่น enum ในโค้ดไม่ตรงกับค่าใน DB, รายการประเทศใน dropdown ไม่ตรงกับที่ payment gateway รองรับ · วิธีกันคือ "single source of truth" (แหล่งเดียว) หรือ test ที่จับความไม่ตรงได้</p>
+    <div class="warn"><strong>⚠️ ความเสี่ยงระยะยาว (docs/08 §4.1):</strong> qTranslate-XT เป็นปลั๊กอิน community fork (แตกจาก qTranslate เดิมที่เลิก maintain) — เสี่ยงหยุดพัฒนา
+    ทีมควรเฝ้าดู + มีแผนสำรอง (ย้าย WPML/Polylang) เผื่ออนาคต · dev ที่ดีรู้ว่า dependency ไหน "เปราะ" และเตรียมทางถอย</div>
+  </div>
+
+  <h2>🧹 Clean Code ประจำ Week 5 — จัดการ config หลายภาษาให้ปลอดภัย</h2>
+  <div class="card">
+    <h3>1. ครอบ helper ปลั๊กอินด้วย function_exists เสมอ</h3>
+    <div class="clean">
+      <div class="bad"><h4>❌ เรียกตรงๆ — ปิดปลั๊กอินแล้วเว็บล่ม</h4>
+<pre><code>echo lang_label( $lang );
+// ถ้า qTranslate ถูกปิด/ถอด
+// = Fatal error: undefined function</code></pre></div>
+      <div class="good"><h4>✅ เช็คก่อนเรียก</h4>
+<pre><code>if ( function_exists('lang_label') ) {
+  echo esc_html( lang_label($lang) );
+}
+// ปลั๊กอินหาย = แค่ไม่แสดง ไม่ล่ม</code></pre></div>
+    </div>
+
+    <h3>2. วน list ภาษาจากแหล่งเดียว ไม่ hardcode ซ้ำ</h3>
+    <div class="clean">
+      <div class="bad"><h4>❌ พิมพ์ภาษาซ้ำหลายที่ — sync ยาก</h4>
+<pre><code>// ในปุ่มสลับภาษา
+echo 'en th tw cn kr fr es';
+// อีกไฟล์เขียน list ต่างกัน
+// ← ต้นตอบั๊ก lang_label!</code></pre></div>
+      <div class="good"><h4>✅ list เดียว วนใช้ซ้ำ</h4>
+<pre><code>$langs = qtranxf_getSortedLanguages();
+foreach ( $langs as $l ) {
+  echo esc_html( lang_label($l) );
+}
+// เพิ่ม/ลบภาษาที่เดียว ครบทุกที่</code></pre></div>
+    </div>
+    <div class="warn"><strong>กฎทอง:</strong> ทุกครั้งที่ก๊อป list เดียวกันไปวางที่ 2 → รอวันมันไม่ตรงกัน · บั๊ก <code>lang_label</code> นี้เกิดเพราะมี list ภาษา 2 แหล่ง
+    — เอา qTranslate เป็น "แหล่งความจริงเดียว" แล้วดึงมาใช้ ป้องกันปัญหาซ้ำในอนาคต</div>
+  </div>
+
+  <h2>🎯 Mission 5 — แก้ <code>lang_label()</code> ให้ครบ 8 ภาษา (งาน MR จริงชิ้นแรก)</h2>
+  <div class="danger" style="margin-bottom:16px">
+    🤖 <strong>กฎ AI สองโหมด:</strong> ปิด AI เขียนมือ · ติดเกิน 20 นาทีขอ hint · <strong>งานนี้แตะ helper จริง — ทำบน sandbox ก่อนเสมอ ห้ามแก้ธีม production ตรง</strong>
+  </div>
+  <div class="mission">
+    <h3>เป้าหมาย <span class="badge orange">~3-4 ชม.</span></h3>
+    <p>ต่อ sandbox — จำลอง qTranslate 8 ภาษา แล้วแก้บั๊ก helper ให้ครบ พร้อมทดสอบทุกภาษา เตรียมเปิด MR</p>
+
+    <div class="step"><div class="num">1</div><div>
+      <strong>ตั้ง qTranslate-XT บน sandbox</strong> — ติดตั้งปลั๊กอิน + เปิด 8 ภาษาตรงกับ production (<code>en th tw cn kr fr es vn</code>)
+      · สร้างโพสต์ทดลอง 1 อัน กรอกหลายภาษา ดูรูปแบบ <code>[:xx]</code> ใน DB (phpMyAdmin)</div></div>
+
+    <div class="step"><div class="num">2</div><div>
+      <strong>reproduce บั๊ก</strong> — เขียน helper <code>lang_label()</code> แบบมี <code>ja</code> ขาด <code>vn</code> (ตามของจริง)
+      แล้วเปิดหน้า <code>/vn/</code> ดู label ภาษาเวียดนามหาย/เพี้ยน → <strong>ต้องเห็นบั๊กกับตาก่อนแก้</strong></div></div>
+
+    <div class="step"><div class="num">3</div><div>
+      <strong>แก้ให้ถูก</strong> — เติม <code>vn =&gt; 'Tiếng Việt'</code> · จัดการ <code>ja</code> (คอมเมนต์ไว้พร้อมโน้ต "รอทีมยืนยันก่อนลบ" — ไม่ลบทันทีเพราะยังไม่ confirm)
+      · ครอบ <code>function_exists</code> ตาม Clean Code</div></div>
+
+    <div class="step"><div class="num">4</div><div>
+      <strong>เขียน checklist ทดสอบ 8 ภาษา</strong> — ตารางเช็คทุกภาษา: label ถูก? ไม่มีแท็กดิบ <code>[:xx]</code> โผล่? ปุ่มสลับภาษาทำงาน?
+      · ทดสอบครบทั้ง 8 แล้วติ๊ก</div></div>
+
+    <div class="step"><div class="num">5</div><div>
+      <strong>จำลอง MR (branch + commit)</strong> — สร้าง branch <code>fix/lang-label-sync-vn</code> · commit <code>fix: add vn to lang_label + flag ja for team review</code>
+      · เขียน MR description: บั๊กคืออะไร, แก้ยังไง, ทดสอบ 8 ภาษาแล้ว, คำถามค้าง (สถานะ ja) · push GitHub (repo generic <code>wp-qtranslate-lang-sync</code> — ตัวอย่างสร้างเอง ไม่ใช่โค้ดธีมบริษัท)</div></div>
+  </div>
+
+  <div class="card">
+    <h3>✅ Definition of Done</h3>
+    <ul class="check">
+      <li>reproduce บั๊กได้ก่อนแก้ (เห็นภาษา vn เพี้ยนกับตา) → เขียนอาการใส่ README</li>
+      <li>แก้แล้ว 8 ภาษาแสดง label ถูกครบ · ไม่มีแท็ก <code>[:xx]</code> ดิบโผล่หน้าใดหน้าหนึ่ง</li>
+      <li>checklist ทดสอบ 8 ภาษาครบ (label + แท็กดิบ + ปุ่มสลับ)</li>
+      <li>MR description ชัด: บั๊ก/วิธีแก้/ทดสอบ/คำถามค้าง · commit message แบบ conventional · Quiz ตอบได้</li>
+    </ul>
+  </div>
+
+  <h2>📝 Quiz — ทดสอบความเข้าใจ</h2>
+  <details><summary>ข้อ 1: ข้อมูลใน DB เก็บเป็น <code>[:en]Sea Candle[:th]ประภาคาร[:]</code> — ทำไมคนเปิด /th/ ถึงเห็นแค่ "ประภาคาร" ไม่เห็นแท็ก?</summary>
+    <p>เพราะ qTranslate เสียบ filter ที่ <code>the_title</code>/<code>the_content</code>/<code>get_field</code> ฯลฯ · filter อ่านภาษาจาก URL (<code>/th/</code>) แล้วตัดเฉพาะส่วน <code>[:th]…</code> ออกมาก่อนแสดง
+    — ข้อมูลเก็บ "รวม" แต่แสดง "แยก" ตามภาษา · ถ้าข้อความไม่ผ่าน filter (เช่น เราประกอบเอง) จะเห็นแท็กดิบทั้งก้อน</p></details>
+  <details><summary>ข้อ 2: เอาชื่อสถานที่ไปประกอบใน JSON-LD เอง แล้วแท็ก <code>[:th]…[:en]…</code> โผล่ในผลลัพธ์ — เกิดจากอะไร แก้ยังไง?</summary>
+    <p>เกิดเพราะประกอบข้อความเองนอกเส้นทาง filter อัตโนมัติ (JSON ที่สร้างเองไม่ได้ผ่าน <code>the_title</code>) · แก้ด้วยเรียก <code>qtranxf_use_language($lang, $text)</code> ตัดภาษาเองก่อนใส่ลง JSON
+    · โยง Week 8: JSON-LD ต้องระวังเรื่องนี้เป็นพิเศษเพราะ AI/crawler จะอ่านแท็กดิบไปด้วย</p></details>
+  <details><summary>ข้อ 3 (security/production): บั๊ก <code>lang_label()</code> ขาด <code>vn</code> ทำไมถึง "เงียบ" หายาก และหลักการอะไรช่วยกันไม่ให้เกิดซ้ำ?</summary>
+    <p>เงียบเพราะโค้ดใช้ <code>?? ''</code> — หา key ไม่เจอคืนค่าว่างแทน error → ไม่มีอะไรเตือน แค่ label หายไปเฉยๆ (ถ้าไม่เปิดภาษา vn ดูเองก็ไม่รู้)
+    · หลักกันซ้ำ: <strong>single source of truth</strong> — ดึง list ภาษาจาก qTranslate ที่เดียว (<code>qtranxf_getSortedLanguages()</code>) แทน hardcode ซ้ำ 2 ที่ · หรือเขียน test ที่ fail เมื่อ 2 แหล่งไม่ตรงกัน</p></details>
+  <details><summary>ข้อ 4: ทำไม qTranslate-XT ถูกจัดเป็น "dependency เปราะ" และ dev ควรเตรียมอะไร?</summary>
+    <p>เพราะเป็น community fork (แตกจาก qTranslate เดิมที่เลิก maintain) — คนดูแลน้อย เสี่ยงหยุดพัฒนา/เข้ากันไม่ได้กับ WP เวอร์ชันใหม่ ·
+    dev ควร: ① pin เวอร์ชัน + ทดสอบ staging ก่อนอัปเดต ② เฝ้าดูสถานะโปรเจค ③ รู้ว่าถ้าต้องย้าย ทางเลือกคือ WPML/Polylang (สถาปัตยกรรมต่างกัน = migrate ไม่ง่าย ต้องวางแผน) · หลักคิด: รู้จุดเปราะของ stack ตัวเองเสมอ</p></details>
+
+  <div class="card" style="border:2px solid var(--brand)">
+    <h3 style="margin-top:0">⏭ สัปดาห์หน้า</h3>
+    <p style="margin:0"><strong>Week 6 — WP_Query &amp; The Loop ⭐ (เริ่ม Phase 1):</strong>
+    "WP_Query = SELECT ของ WP" — เขียน query ดึงข้อมูลมาแสดงเอง, tax_query vs meta_query, และ<strong>กับดัก orderby meta ที่ทำโพสต์หลุดหายทั้งชุด</strong>
+    · Mission เริ่มสร้าง <code>header.php</code> + แถบ Unibar จริง (Phase 1 ของงาน redesign)</p>
+  </div>
+
+  <div class="nav-bottom">
+    <a class="btn ghost" href="../week-04/index.html">← Week 4</a>
+    <a class="btn ghost" href="../index.html">หน้ารวมคอร์ส</a>
+    <span class="btn" style="background:#9ca3af;cursor:default">Week 6 (รอสร้าง) →</span>
+  </div>
+  <footer>PHP Full Stack Track × Fujisawa V2.1 · Week 5 · มาตรฐานบทเรียน 7 ส่วน</footer>
+</div>
+</body>
+</html>

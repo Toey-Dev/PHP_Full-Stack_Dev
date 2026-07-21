@@ -152,6 +152,10 @@
   <div class="card">
     <p>นี่คือไฟล์ dev-starter จริงของโปรเจค (อยู่ใน <code>dev-starter/</code>) — โค้ดที่วีจะใช้จริง
     ไฟล์ยาว ~250 บรรทัด แบ่งเป็น <strong>3 ก้อนงาน</strong> ไล่อ่าน<strong>ทีละฟังก์ชัน</strong> (โค้ดใหญ่ไม่อ่านทีละบรรทัด — ดูภาพรวมของแต่ละก้อนว่าทำอะไร ทำไม):</p>
+    <div class="warn"><strong>📌 อ่านโค้ดจริงต้องแยกให้ออก: "สไตล์ที่เขาเขียน" ≠ "สไตล์ที่เราควรเขียน"</strong> —
+    โค้ดด้านล่างยกมาจากไฟล์จริงแบบไม่ดัดแปลง จะเห็น <code>if (...) exit;</code> / <code>if (...) return;</code> เขียนบรรทัดเดียวไม่มีปีกกา
+    ซึ่ง <strong>WPCS ฟ้อง</strong> (ดูกฎใน <a href="../week-01/index.html#clean-code">Week 1 · Clean Code ข้อ 2</a>) · <em>อ่านของเขาให้เข้าใจ แต่เวลาเขียนเองใส่ปีกกาเสมอ</em>
+    — นี่คือทักษะที่จะใช้เต็มๆ ใน Week 7 ตอน refactor theme เก่า</div>
 
     <h3>ก้อนที่ 1 — <code>add_action('init', ...)</code>: register CPT + taxonomy</h3>
 <pre><code>if (!defined('ABSPATH')) exit;   // กันเปิดไฟล์ตรงๆ จากเบราว์เซอร์

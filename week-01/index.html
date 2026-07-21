@@ -352,7 +352,7 @@ function wlf_excerpt_more( $more ) {               // 2
     ทักษะ "ออกแบบเว็บให้คนไม่เขียนโค้ดดูแลเองได้" คือทักษะที่ตลาดจ่ายเงินให้</p>
   </div>
 
-  <h2>🧹 Clean Code ประจำ Week 1 — เขียน hook แบบมืออาชีพ</h2>
+  <h2 id="clean-code">🧹 Clean Code ประจำ Week 1 — เขียน hook แบบมืออาชีพ</h2>
   <div class="card">
     <p>3 รูปแบบที่ใช้ได้ทันทีใน Mission สัปดาห์นี้:</p>
 
@@ -380,11 +380,25 @@ function wlf_excerpt_more( $more ) {               // 2
 }</code></pre></div>
       <div class="good"><h4>✅ ไม่ใช่ธุระ = ออกทันที</h4>
 <pre><code>function whl_schema() {
-  if ( ! is_singular('sightseeing') ) return;
-  if ( is_admin() ) return;
+  if ( ! is_singular('sightseeing') ) {
+    return;   // ไม่ใช่หน้านี้ → ออกเลย
+  }
+  if ( is_admin() ) {
+    return;   // อยู่หลังบ้าน → ออกเลย
+  }
   // งานจริงอยู่ชั้นนอกสุด อ่านง่าย
 }</code></pre></div>
     </div>
+    <div class="tip"><strong>🔄 กฎการ "พลิกเงื่อนไข" (จุดที่คนสับสนที่สุด):</strong> เวลาเปลี่ยนจากซ้อน if → guard clause
+    ต้องพลิกทุกเงื่อนไขให้กลายเป็น "เงื่อนไขที่จะไล่ออก" — ตัวไหนเคยมี <code>!</code> จะหายไป ตัวไหนไม่เคยมีจะได้ <code>!</code> มา<br>
+    <code>if ( is_singular(...) ) {ทำ}</code> → <code>if ( <strong>!</strong> is_singular(...) ) {return;}</code> ·
+    <code>if ( <strong>!</strong> is_admin() ) {ทำ}</code> → <code>if ( is_admin() ) {return;}</code><br>
+    <em>เปรียบเปรย:</em> แบบซ้อน = พาคนที่ผ่านเกณฑ์เดินเข้าห้องซ้อนห้อง · แบบ guard = ยามยืนหน้าประตู ใครไม่เข้าเกณฑ์เชิญกลับทันที คนที่ผ่านเดินเข้าโถงใหญ่ตรงๆ</div>
+    <div class="warn"><strong>⚠️ ทำไมต้องมีปีกกา <code>{ }</code> แม้มีบรรทัดเดียว:</strong>
+    <strong>WordPress Coding Standards (WPCS) ห้าม</strong> เขียน if แบบไม่มีปีกกา (กฎ <code>Generic.ControlStructures.InlineControlStructure</code>) —
+    ถ้ารัน <code>phpcs --standard=WordPress</code> (จะตั้งใน Week 9) จะโดนฟ้อง · เหตุผลเชิงวิศวกรรม: วันหน้าเติมบรรทัดที่ 2 เข้าไปแล้วลืมใส่ปีกกา = บั๊กเงียบที่หายากมาก<br>
+    <strong>ข้อยกเว้นที่จะเจอในโค้ดจริง:</strong> บรรทัดกัน direct access <code>if ( ! defined( 'ABSPATH' ) ) exit;</code> นิยมเขียนบรรทัดเดียวกันทั้งวงการ
+    (เจอในไฟล์จริงของโปรเจคด้วย) — ถ้าอยากให้ผ่าน WPCS ใช้รูปแบบ <code>defined( 'ABSPATH' ) || exit;</code> ซึ่งไม่ใช่ control structure จึงไม่โดนกฎนี้</div>
 
     <h3>3. Callback เป็นฟังก์ชันมีชื่อ — ไม่ยัด logic ยาวใน closure</h3>
     <div class="clean">
